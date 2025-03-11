@@ -3,8 +3,10 @@ import { defineConfig } from 'vitest/config';
 import dts from 'vite-plugin-dts';
 import { externalizeDeps } from 'vite-plugin-externalize-deps';
 
+const testPattern = "src/**/*.{test,spec}.{js,ts}"
+
 export default defineConfig({
-  plugins: [dts(), externalizeDeps()],
+  plugins: [dts({ exclude: testPattern }), externalizeDeps()],
   build: {
     lib: {
       name: 'index',
@@ -13,6 +15,6 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.{test,spec}.{js,ts}"],
+    include: [testPattern],
   },
 })
