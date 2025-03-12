@@ -1,10 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { parse, NodeMap, type AstRoot, type ReplacementTarget, isSpecialLink, nodeSort, getAllPositionNodes, applyHeadingDepth, extractRegion, replaceRegion, specialLinkText, formClosingComment } from "./utils";
-import { visit, } from "unist-util-visit";
+import { parse, nodeSort, getAllPositionNodes, } from "./utils";
 
 describe(nodeSort.name, () => {
   test("should sort nodes by line number", () => {
-    const ast = parse.md("# Hello\n\n[Link](http://example.com)");
+    const ast = parse.md(lorem.md[0]);
     let previousLine = 0;
     let previousColumn = 0;
     for (const node of getAllPositionNodes(ast).sort(nodeSort)) {
@@ -31,190 +30,52 @@ describe(nodeSort.name, () => {
 
 })
 
-describe(NodeMap.name, () => {
-  test(NodeMap.prototype.tryGetDepthForNode.name, () => {
-    for (const markdown of lorem.md) {
-      const headings = markdown.split("\n")
-        .map((content, index) => ({ content, line: index + 1 }))
-        .filter(({ content }) => content.startsWith("#"))
-        .map(heading => ({ ...heading, depth: heading.content.match(/^#+/)?.[0].length }));
-      const ast = parse.md(markdown);
-      const depthMap = new NodeMap(ast);
-      let index = headings.length - 1;
-      for (const node of getAllPositionNodes(ast).sort(nodeSort.reverse)) {
-        if (node.position.start.line < headings[index].line) index--;
-        const depth = depthMap.tryGetDepthForNode(node);
-        expect(depth).toBe(headings[index].depth,);
-      }
+interface PsuedoDir {
+  [key: string]: PsuedoDir | string;
+}
+
+export class PsuedoFilesystem {
+  constructor(private readonly root: PsuedoDir, options?: { setContentToPath?: boolean, dedent?: boolean }) {
+    const { setContentToPath = false, dedent = false } = options ?? {};
+    if (setContentToPath) PsuedoFilesystem.SetAllFileContentToPath(this.root);
+    if (dedent) PsuedoFilesystem.DedentAllFileContent(this.root);
+  }
+
+  getFileFromAbsolutePath(path: string) {
+    return path.split("/").reduce((acc, part) => (acc as Record<string, PsuedoDir>)[part], this.root) as any as string;
+  }
+
+  static SetAllFileContentToPath(root: PsuedoDir, prefix?: string) {
+    for (const key in root) {
+      const value = root[key];
+      const path = prefix ? `${prefix}/${key}` : key;
+      if (typeof value === "string") root[key] = path;
+      else this.SetAllFileContentToPath(value, path);
     }
-  });
+  }
 
-  describe(NodeMap.prototype.getReplacementTargets.name, () => {
-    test('should return empty array for no special links or comments', () => {
-      const emptyMarkdown = "# Just a heading\n\nNo special links or comments here.";
-      const emptyAst = parse.md(emptyMarkdown);
-      const emptyNodeMap = new NodeMap(emptyAst);
-      expect(emptyNodeMap.getReplacementTargets()).toEqual([]);
-    });
+  static DedentAllFileContent(root: PsuedoDir) {
+    for (const key in root) {
+      const value = root[key];
+      if (typeof value !== "string") return this.DedentAllFileContent(value);
+      const lines = value.split('\n');
+      const nonEmptyLines = lines.filter(line => line.trim().length > 0);
 
-    test('should handle single unpopulated special link (no closing comment)', () => {
-      const singleLinkMarkdown = "# Heading\n\n[](http://example.com)";
-      const singleLinkAst = parse.md(singleLinkMarkdown);
-      const singleLinkNodeMap = new NodeMap(singleLinkAst);
-      const singleLinkTargets = singleLinkNodeMap.getReplacementTargets();
-      expect(singleLinkTargets.length).toBe(1);
-      expect(singleLinkTargets[0].url).toBe("http://example.com");
-      expect(singleLinkTargets[0].headingDepth).toBe(1);
-      expect(extractRegion(singleLinkMarkdown, singleLinkTargets[0])).toBe("[](http://example.com)");
-    });
+      if (nonEmptyLines.length === 0) continue;
 
-    test('should handle special link with closing comment', () => {
-      const linkWithCommentMarkdown =
-        "# Main heading\n\n" +
-        "## Section\n\n" +
-        "[](./file.md)\n\n" +
-        "Some content\n\n" +
-        "<!-- parkdown END test -->";
-      const linkWithCommentAst = parse.md(linkWithCommentMarkdown);
-      const linkWithCommentNodeMap = new NodeMap(linkWithCommentAst);
-      const linkWithCommentTargets = linkWithCommentNodeMap.getReplacementTargets();
-      expect(linkWithCommentTargets.length).toBe(1);
-      expect(linkWithCommentTargets[0].url).toBe("./file.md");
-      expect(linkWithCommentTargets[0].headingDepth).toBe(2);
-      expect(
-        extractRegion(linkWithCommentMarkdown, linkWithCommentTargets[0])
-      ).toBe("[](./file.md)\n\nSome content\n\n<!-- parkdown END test -->");
-    });
+      const indentLevels = nonEmptyLines.map((line, index) => {
+        const match = line.match(/^( *)/);
+        const dedent = match ? match[1].length : 0;
+        return index === 0 && dedent === 0 ? Infinity : dedent;
+      });
+      const minIndent = Math.min(...indentLevels);
+      if (minIndent === 0) continue;
+      root[key] = value.replace(new RegExp(`^[ ]{${minIndent}}`, 'gm'), '');
+    }
+  }
+}
 
-    test('should handle multiple links and comments', () => {
-      const complexMarkdown =
-        "# Main heading\n\n" +
-        "## First section\n\n" +
-        "[](./first.md)\n\n" +
-        "Some content\n\n" +
-        "<!-- parkdown END first -->\n\n" +
-        "## Second section\n\n" +
-        "[](./second.md)\n\n" +
-        "More content\n\n" +
-        "<!-- parkdown END second -->\n\n" +
-        "## Third section\n\n" +
-        "[](http://example.com)";
-      const complexAst = parse.md(complexMarkdown);
-      const complexNodeMap = new NodeMap(complexAst);
-      const complexTargets = complexNodeMap.getReplacementTargets();
-      expect(complexTargets.length).toBe(3);
-
-      // First replacement target should be the populated link (with comment)
-      expect(complexTargets[0].url).toBe("./first.md");
-      expect(complexTargets[0].headingDepth).toBe(2);
-      expect(
-        extractRegion(complexMarkdown, complexTargets[0])
-      ).toBe("[](./first.md)\n\nSome content\n\n<!-- parkdown END first -->");
-
-      // Second replacement target should be the populated link (with comment)
-      expect(complexTargets[1].url).toBe("./second.md");
-      expect(complexTargets[1].headingDepth).toBe(2);
-      expect(
-        extractRegion(complexMarkdown, complexTargets[1])
-      ).toBe("[](./second.md)\n\nMore content\n\n<!-- parkdown END second -->");
-
-      // Third replacement target should be the unpopulated link (no comment)
-      expect(complexTargets[2].url).toBe("http://example.com");
-      expect(complexTargets[2].headingDepth).toBe(2);
-      expect(
-        extractRegion(complexMarkdown, complexTargets[2])
-      ).toBe("[](http://example.com)");
-    });
-  });
-});
-
-describe(isSpecialLink.name, () => {
-  const check = (md: string, expectation: boolean) =>
-    visit(parse.md(md), "link", (node) => expect(isSpecialLink(node)).toBe(expectation));
-
-  const cases = {
-    "non-link": ["test", false],
-    "link has text": ["[test](http://example.com)", false],
-    "link has no text, but unsupported target": ["[](file.md)", false],
-    "web link": ["[](http://example.com)", true],
-    "relative file, same directory": ["[](./file.md)", true],
-    "relative file, different directory": ["[](../file.md)", true],
-  } as const;
-
-  for (const [description, [md, expectation]] of Object.entries(cases))
-    test(description, () => check(md, expectation));
-});
-
-describe('applyHeadingDepth', () => {
-  test('should increase heading levels by the specified depth', () => {
-    const markdown = "# Heading 1\n\n## Heading 2\n\n### Heading 3";
-    const result = applyHeadingDepth(markdown, 1);
-    expect(result).toBe("## Heading 1\n\n### Heading 2\n\n#### Heading 3");
-  });
-
-  test('should decrease heading levels by the specified depth', () => {
-    const markdown = "### Heading 3\n\n## Heading 2\n\n# Heading 1";
-    const result = applyHeadingDepth(markdown, -1);
-    expect(result).toBe("## Heading 3\n\n# Heading 2\n\n# Heading 1");
-  });
-
-  test('should cap heading levels at 6', () => {
-    const markdown = "#### Heading 4\n\n##### Heading 5\n\n###### Heading 6";
-    const result = applyHeadingDepth(markdown, 2);
-    expect(result).toBe("###### Heading 4\n\n###### Heading 5\n\n###### Heading 6");
-  });
-
-  test('should not modify non-heading content', () => {
-    const markdown = "# Heading 1\n\nSome regular text\n\n## Heading 2\n\n- List item 1\n- List item 2";
-    const result = applyHeadingDepth(markdown, 1);
-    expect(result).toBe("## Heading 1\n\nSome regular text\n\n### Heading 2\n\n- List item 1\n- List item 2");
-  });
-
-  test('should handle headings with different formatting', () => {
-    const markdown = "# *Italic Heading*\n\n## **Bold Heading**\n\n### `Code Heading`";
-    const result = applyHeadingDepth(markdown, 1);
-    expect(result).toBe("## *Italic Heading*\n\n### **Bold Heading**\n\n#### `Code Heading`");
-  });
-
-  test('should handle headings with special characters', () => {
-    const markdown = "# Heading with & special < characters >";
-    const result = applyHeadingDepth(markdown, 2);
-    expect(result).toBe("### Heading with & special < characters >");
-  });
-
-  test('should accept an existing AST as input', () => {
-    const markdown = "# Heading 1\n\n## Heading 2";
-    const ast = parse.md(markdown);
-    const result = applyHeadingDepth(markdown, 2, ast);
-    expect(result).toBe("### Heading 1\n\n#### Heading 2");
-  });
-});
-
-describe('replaceRegion', () => {
-  test('should replace a single-line region', () => {
-    const lines = [
-      "# Heading",
-      "[](http://example.com)",
-      "Some other content"
-    ];
-
-    const content = "This is new content";
-    const msg = "replaced";
-    const url = "http://example.com";
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 2, column: 1 },
-        end: { line: 3, column: lines[2].length }
-      },
-      url
-    }, content, msg);
-
-    expect(result).toBe([lines[0], specialLinkText({ url }), content, formClosingComment(msg)].join("\n"));
-  });
-
-});
-
-const lorem = {
+export const lorem = {
   md: [
     `# Vi nactusque pelle at floribus irata quamvis
 
