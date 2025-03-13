@@ -1,5 +1,5 @@
-import { getAllPositionNodes, start, parse, hasPosition, linkHasNoText, zeroIndexed, lined, spaced, Html, nodeSort, replaceWithContent, extractContent, getContentInBetween } from "./utils";
-import type { AstRoot, MarkdownNode, Link, Position, PositionNode, HasPosition } from "./utils"
+import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween } from "./utils";
+import type { AstRoot, MarkdownNode, Link, PositionNode, HasPosition } from "./utils"
 import { dirname, join } from "node:path";
 
 const specialLinkTargets = ["http", "./", "../"] as const;
@@ -9,7 +9,6 @@ export type SpecialLink = PositionNode<"link">;
 export const isSpecialLink = (node: Link): node is SpecialLink =>
   hasPosition(node) && linkHasNoText(node) && isSpecialLinkTarget(node);
 export const specialLinkText = ({ url }: Pick<SpecialLink, "url">) => `[](${url})` as const;
-
 
 type CommentType = "begin" | "end";
 
@@ -42,7 +41,7 @@ const replacePopulated = (
 
 export const getReplacementContent = (target: Pick<ReplacementTarget, "url">, content: string, inline = true) =>
   inline
-    ? lined(`${specialLinkText(target)}${specialComment.begin}`, content, specialComment.end)
+    ? `${specialLinkText(target)} ${specialComment.begin} ${content} ${specialComment.end}` as const
     : lined(specialLinkText(target), specialComment.begin, content, specialComment.end);
 
 export const nodeDepthFinder = (ast: AstRoot) => {
@@ -57,75 +56,69 @@ export const nodeDepthFinder = (ast: AstRoot) => {
   }
 }
 
-const errors = {
+const error = {
   openingCommentDoesNotFollowLink: ({ position: { start } }: SpecialComment<"begin">) =>
     new Error(`Opening comment (@${start.line}:${start.column}) does not follow link`),
-  closingCommentNotMatchedToOpeningComment: ({ position: { start } }: SpecialComment<"end">) =>
+  closingCommentNotMatchedToOpening: ({ position: { start } }: SpecialComment<"end">) =>
     new Error(`Closing comment (@${start.line}:${start.column}) does not match to opening comment`),
-  openingCommentNotFollowedByClosingComment: ({ position: { start } }: SpecialComment<"begin">) =>
+  openingCommentNotClosed: ({ position: { start } }: SpecialComment<"begin">) =>
     new Error(`Opening comment (@${start.line}:${start.column}) is not followed by a closing comment`),
 }
 
-export const matchOpeningCommentsToLinks = (
-  markdown: string, links: SpecialLink[], openingComments: SpecialComment<"begin">[]
+export const getTopLevelCommentBlocks = (
+  openingComments: SpecialComment<"begin">[], closingComments: SpecialComment<"end">[]
 ) => {
-  const linkCandidates = [...links].sort(nodeSort);
-  const results: (SpecialLink | [SpecialLink, SpecialComment<"begin">])[] = [];
-
-  [...openingComments].sort(nodeSort.reverse).forEach(comment => {
-    while (linkCandidates.length > 0) {
-      const link = linkCandidates.pop()!;
-      if (link.position.start.offset < comment.position.start.offset) {
-        if (getContentInBetween(markdown, link, comment).trim() !== "")
-          throw errors.openingCommentDoesNotFollowLink(comment);
-        return results.push([link, comment]);
-      }
-      results.push(link);
-    }
-    throw errors.openingCommentDoesNotFollowLink(comment);
-  });
-
-  results.push(...linkCandidates.reverse());
-  return results.reverse();
-}
-
-type LinksAndOpeningComments = ReturnType<typeof matchOpeningCommentsToLinks>;
-
-export const matchCommentBlocks = (
-  matched: LinksAndOpeningComments, closingComments: SpecialComment<"end">[]
-) => {
-  const results: (SpecialLink | [SpecialLink, SpecialComment<"begin">, SpecialComment<"end">])[] =
-    matched.filter(item => !Array.isArray(item)).map(item => item as SpecialLink);
-
-  const openings = matched
-    .map((item, index) => Array.isArray(item) ? { node: item[1], index, type: "open" as const } : undefined)
-    .filter(Boolean);
-
-  const stack: Exclude<typeof openings[number], undefined>[] = [];
+  const blocks: { open: SpecialComment<"begin">, close: SpecialComment<"end"> }[] = [];
 
   const combined = [
-    ...openings as typeof stack,
+    ...openingComments.map(node => ({ node, type: "open" as const })),
     ...closingComments.map(node => ({ node, type: "close" as const }))
   ].sort((a, b) => nodeSort(a.node, b.node));
 
-  for (const item of combined) {
+  const stack: (typeof combined[number] & { type: "open" })[] = [];
+
+  for (const item of combined)
     if (item.type === "open") stack.push(item)
     else {
       const close = item.node as SpecialComment<"end">;
       if (stack.length === 0)
-        throw errors.closingCommentNotMatchedToOpeningComment(close);
-      const open = stack.pop()!;
+        throw error.closingCommentNotMatchedToOpening(close);
+      const open = stack.pop()!.node;
       if (stack.length > 0) continue;
-      const existing = matched[open.index];
-      if (!Array.isArray(existing)) throw new Error("Unreachable")
-      results.push([existing[0], existing[1], close]);
+      blocks.push({ open, close });
     }
-  }
 
   if (stack.length > 0)
-    throw errors.openingCommentNotFollowedByClosingComment(stack[0].node);
+    throw error.openingCommentNotClosed(stack[0].node);
 
-  return results.sort((a, b) => nodeSort(Array.isArray(a) ? a[0] : a, Array.isArray(b) ? b[0] : b));
+  return blocks;
+}
+
+type CommentBlocks = ReturnType<typeof getTopLevelCommentBlocks>;
+
+export const matchCommentBlocksToLinks = (
+  markdown: string, links: SpecialLink[], blocks: CommentBlocks
+) => {
+  const linkCandidates = [...links].sort(nodeSort);
+  const results: (SpecialLink | [SpecialLink, CommentBlocks[number]])[] = [];
+
+  [...blocks]
+    .sort((a, b) => nodeSort.reverse(a.open, b.open))
+    .forEach(block => {
+      while (linkCandidates.length > 0) {
+        const link = linkCandidates.pop()!;
+        if (link.position.start.offset < block.open.position.start.offset) {
+          if (getContentInBetween(markdown, link, block.open).trim() !== "")
+            throw error.openingCommentDoesNotFollowLink(block.open);
+          return results.push([link, block]);
+        }
+        results.push(link);
+      }
+      throw error.openingCommentDoesNotFollowLink(block.open);
+    });
+
+  results.push(...linkCandidates.reverse());
+  return results.reverse();
 }
 
 export const getReplacementTargets = (markdwn: string, ast: AstRoot): ReplacementTarget[] => {
@@ -134,11 +127,10 @@ export const getReplacementTargets = (markdwn: string, ast: AstRoot): Replacemen
   const htmlNodes = getAllPositionNodes(ast, "html").sort(nodeSort);
   const openingComments = htmlNodes.filter(isSpecialComment("begin"));
   const closingComments = htmlNodes.filter(isSpecialComment("end"));
-
-  const linksAndOpeningComments = matchOpeningCommentsToLinks(markdwn, specialLinks, openingComments);
-  return matchCommentBlocks(linksAndOpeningComments, closingComments).map(block =>
-    Array.isArray(block)
-      ? replacePopulated(block[0], block[2], findDepth(block[0])!)
+  const blocks = getTopLevelCommentBlocks(openingComments, closingComments);
+  return matchCommentBlocksToLinks(markdwn, specialLinks, blocks)
+    .map(block => Array.isArray(block)
+      ? replacePopulated(block[0], block[1].close, findDepth(block[0])!)
       : replaceUnpopulated(block, findDepth(block)!))
 }
 
@@ -147,7 +139,6 @@ type GetRelativePathContent = (path: string) => string;
 export const extendGetRelativePathContent = (
   getRelativePathContent: GetRelativePathContent, { url }: Pick<ReplacementTarget, "url">
 ) => ((path) => getRelativePathContent(join(dirname(url), path))) satisfies GetRelativePathContent;
-
 
 const clampHeadingSum = (...toSum: number[]) => {
   const sum = toSum.reduce((a, b) => a + b, 0);

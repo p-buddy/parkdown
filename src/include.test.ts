@@ -10,10 +10,8 @@ import {
   recursivelyApplyInclusions,
   nodeDepthFinder,
   specialComment,
-  matchCommentBlocks,
   specialLinkText,
   isSpecialComment,
-  matchOpeningCommentsToLinks
 } from "./include";
 
 
@@ -99,6 +97,7 @@ describe('applyHeadingDepth', () => {
   });
 });
 
+/** 
 describe(matchOpeningCommentsToLinks.name, () => {
   test("happy path", () => {
     const { text, ast } = md(`
@@ -148,8 +147,9 @@ hh ${specialComment.begin}
     expect(() => matchOpeningCommentsToLinks(text, specialLinks, openingComments)).toThrow();
   })
 })
+*/
 
-
+/**
 describe(matchCommentBlocks.name, () => {
   test("happy path", () => {
     const { text, ast } = md(`
@@ -193,6 +193,7 @@ ${specialLinkText({ url: "./not-populated" })}
     ])
   })
 })
+*/
 
 describe(extendGetRelativePathContent.name, () => {
   test('should call original function with resolved path', () => {
