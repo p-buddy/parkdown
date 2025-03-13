@@ -12,21 +12,21 @@ Inline inclusions occur when a "[special link]()" is
 
 What you write:
 
-[](./unpopulated/inline.single.md?code)
+[](./unpopulated/inline.single.md?tag=code)
 
 What is rendered:
 
-> [](./unpopulated/inline.single.md)
+[](./unpopulated/inline.single.md?tag=quote)
 
 #### Populated
 
 What your markdown file contains:
 
-[](./populated/inline.single.md?code)
+[](./populated/inline.single.md?tag=code)
 
 What is rendered:
 
-> [](./populated/inline.single.md)
+[](./populated/inline.single.md?tag=quote)
 
 ### Option B (multi line)
 
@@ -34,21 +34,21 @@ What is rendered:
 
 What you write:
 
-[](./unpopulated/inline.multi.md?code)
+[](./unpopulated/inline.multi.md?tag=code)
 
 What is rendered:
 
-> [](./unpopulated/inline.multi.md)
+[](./unpopulated/inline.multi.md?tag=quote)
 
 #### Populated
 
 What your markdown file contains:
 
-[](./populated/inline.multi.md?code)
+[](./populated/inline.multi.md?tag=code)
 
 What is rendered:
 
-> [](./populated/inline.multi.md)
+[](./populated/inline.multi.md?tag=quote)
 
 ## Block
 
@@ -56,24 +56,19 @@ What is rendered:
 
 What you write:
 
-[](./unpopulated/block.md?code)
+[](./unpopulated/block.md?tag=code)
 
 What is rendered:
 
-<blockquote>
+[](./unpopulated/block.md?tag=quote)
 
-[](./unpopulated/block.md)
-
-</blockquote>
 
 ### Populated
 
 What your markdown file contains:
 
-[](./populated/block.md?code)
+[](./populated/block.md?tag=code)
 
 What is rendered:
 
-<blockquote>
-[](./populated/block.md)
-</blockquote>
+[](./populated/block.md?tag=quote)

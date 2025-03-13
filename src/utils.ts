@@ -95,3 +95,12 @@ const offsetIndex = ({ start, end }: Position, offset: number) =>
 
 export const zeroIndexed = (position: Position) => offsetIndex(position, -1);
 export const oneIndexed = (position: Position) => offsetIndex(position, 1);
+
+export const seperateQueryParams = (path: string): [lhs: string, query: string] => {
+  const parts = path.split("?");
+  return parts.length > 1 ? [parts.slice(0, -1).join("?"), parts.at(-1)!] : [path, ""];
+}
+
+export const getQueryParams = (path: string) => seperateQueryParams(path)[1];
+
+export const removeQueryParams = (path: string) => seperateQueryParams(path)[0];

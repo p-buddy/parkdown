@@ -136,7 +136,7 @@ export const getReplacementTargets = (markdwn: string, ast?: AstRoot): Replaceme
     : replaceUnpopulated(block, findDepth(block)))
 }
 
-type GetRelativePathContent = (path: string) => string;
+export type GetRelativePathContent = (path: string) => string;
 
 export const extendGetRelativePathContent = (
   getRelativePathContent: GetRelativePathContent, { url }: Pick<ReplacementTarget, "url">
@@ -163,7 +163,18 @@ export const applyHeadingDepth = (markdown: string, headingDepth: number, ast?: 
   return lines.join("\n");
 }
 
-const codeblock = (language: string, content: string) => `\`\`\`${language}\n${content}\n\`\`\``;
+const applyTag = (tag: string, content: string, extension: string) => {
+  switch (tag) {
+    case "code":
+      return `\`\`\`${extension}\n${content}\n\`\`\``;
+    case "quote":
+      return `<blockquote>\n\n${content}\n\n</blockquote>\n`;
+    default:
+      throw new Error(`Unsupported tag: ${tag}`);
+  }
+}
+
+const defaultCodeFileExtensions = ["ts", "js", "jsx", "tsx", "svelte"];
 
 export const recursivelyApplyInclusions = (
   markdown: string,
@@ -183,24 +194,26 @@ export const recursivelyApplyInclusions = (
     const current = targets[i]
     const { url, headingDepth } = current;
     if (url.startsWith("./") || url.startsWith("../")) {
-      const content = getRelativePathContent(url);
+      let content = getRelativePathContent(url);
       const [extension, query] = url.split(".").pop()?.split("?") ?? [];
       const params = new URLSearchParams(query ?? "");
 
-      let adjusted: string;
-      switch (extension) {
-        case "md":
-          if (!params.has("code")) {
-            const extended = extendGetRelativePathContent(getRelativePathContent, current);
-            adjusted = recursivelyApplyInclusions(content, headingDepth, extended);
-            break;
-          }
-        default:
-          adjusted = codeblock(extension, content);
-          break;
-      }
-      const wrapped = getReplacementContent(current, adjusted);
-      markdown = replaceWithContent(markdown, wrapped, current);
+      const skip = params.has("skip"); // skip the default behavior of included file
+      const tags = params.get("tag")?.split(",") ?? [];
+      const lines = params.get("lines");
+
+      if (!skip)
+        if (extension === "md")
+          content = recursivelyApplyInclusions(
+            content,
+            headingDepth,
+            extendGetRelativePathContent(getRelativePathContent, current)
+          );
+        else if (defaultCodeFileExtensions.includes(extension))
+          tags.unshift("code");
+
+      content = tags.reduce((content, tag) => applyTag(tag, content, extension), content);
+      markdown = replaceWithContent(markdown, getReplacementContent(current, content), current);
     }
     else if (url.startsWith("http"))
       throw new Error("External web links are not implemented yet");

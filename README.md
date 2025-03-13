@@ -16,7 +16,7 @@ Inline inclusions occur when a "[special link]()" is
 
 What you write:
 
-[](./unpopulated/inline.single.md?code)
+[](./unpopulated/inline.single.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: [](<url>) :After
@@ -25,16 +25,21 @@ Before: [](<url>) :After
 
 What is rendered:
 
-> [](./unpopulated/inline.single.md)
+[](./unpopulated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
+<blockquote>
+
 Before: [](<url>) :After
+
+</blockquote>
+
 <!-- parkdown END -->
 
 ##### Populated
 
 What your markdown file contains:
 
-[](./populated/inline.single.md?code)
+[](./populated/inline.single.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: [](<url>) <!-- parkdown Begin -->
@@ -45,11 +50,16 @@ Included-2 <!-- parkdown End --> :After
 
 What is rendered:
 
-> [](./populated/inline.single.md)
+[](./populated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
+<blockquote>
+
 Before: [](<url>) <!-- parkdown Begin -->
 Included-1
 Included-2 <!-- parkdown End --> :After
+
+</blockquote>
+
 <!-- parkdown END -->
 
 #### Option B (multi line)
@@ -58,7 +68,7 @@ Included-2 <!-- parkdown End --> :After
 
 What you write:
 
-[](./unpopulated/inline.multi.md?code)
+[](./unpopulated/inline.multi.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: 
@@ -69,18 +79,23 @@ Before:
 
 What is rendered:
 
-> [](./unpopulated/inline.multi.md)
+[](./unpopulated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
+<blockquote>
+
 Before: 
 [](<url>)
 :After
+
+</blockquote>
+
 <!-- parkdown END -->
 
 ##### Populated
 
 What your markdown file contains:
 
-[](./populated/inline.multi.md?code)
+[](./populated/inline.multi.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: 
@@ -93,13 +108,18 @@ Included-2 <!-- parkdown End (inline) -->
 
 What is rendered:
 
-> [](./populated/inline.multi.md)
+[](./populated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
+<blockquote>
+
 Before: 
 [](<url>) <!-- parkdown Begin (inline) -->
 Included-1
 Included-2 <!-- parkdown End (inline) --> 
 :After
+
+</blockquote>
+
 <!-- parkdown END -->
 
 ### Block
@@ -108,7 +128,7 @@ Included-2 <!-- parkdown End (inline) -->
 
 What you write:
 
-[](./unpopulated/block.md?code)
+[](./unpopulated/block.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before:
@@ -121,24 +141,26 @@ Before:
 
 What is rendered:
 
+[](./unpopulated/block.md?tag=quote)
+<!-- parkdown BEGIN -->
 <blockquote>
 
-[](./unpopulated/block.md)
-<!-- parkdown BEGIN -->
 Before:
 
 [](<url>)
 
 :After
-<!-- parkdown END -->
 
 </blockquote>
+
+<!-- parkdown END -->
+
 
 #### Populated
 
 What your markdown file contains:
 
-[](./populated/block.md?code)
+[](./populated/block.md?tag=code)
 <!-- parkdown BEGIN -->
 ```md
 Before:
@@ -155,8 +177,21 @@ Include-2
 
 What is rendered:
 
+[](./populated/block.md?tag=quote)
+<!-- parkdown BEGIN -->
 <blockquote>
-[](./populated/block.md)
+
+Before:
+
+[](<url>)
+<!-- parkdown Begin  -->
+Include-1
+Include-2
+<!-- parkdown End  -->
+
+:After
+
 </blockquote>
 
+<!-- parkdown END -->
 <!-- parkdown END -->
