@@ -1,58 +1,49 @@
-import { getAllPositionNodes, start, parse, hasPosition, linkHasNoText, zeroIndexed, lined, spaced, Html } from "./utils";
-import type { AstRoot, MarkdownNode, WithPosition, Link, Position } from "./utils"
+import { getAllPositionNodes, start, parse, hasPosition, linkHasNoText, zeroIndexed, lined, spaced, Html, nodeSort, replaceWithContent, extractContent, getContentInBetween } from "./utils";
+import type { AstRoot, MarkdownNode, Link, Position, PositionNode, HasPosition } from "./utils"
 import { dirname, join } from "node:path";
 
 const specialLinkTargets = ["http", "./", "../"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
 
-export type SpecialLink = WithPosition<Link>;
+export type SpecialLink = PositionNode<"link">;
 export const isSpecialLink = (node: Link): node is SpecialLink =>
   hasPosition(node) && linkHasNoText(node) && isSpecialLinkTarget(node);
-export const specialLinkText = ({ url }: Pick<SpecialLink, "url">) => `[](${url})`;
+export const specialLinkText = ({ url }: Pick<SpecialLink, "url">) => `[](${url})` as const;
 
-const closingCommentIdentifier = "parkdown END";
-const htmlComment = { open: "<!--", close: "-->" };
-export const formClosingComment = (msg: string) =>
-  spaced(htmlComment.open, closingCommentIdentifier, msg, htmlComment.close);
 
-export type ClosingComment = WithPosition<Html>;
-export const isClosingComment = (node: Html): node is ClosingComment =>
-  hasPosition(node) && node.value.startsWith(spaced(htmlComment.open, closingCommentIdentifier)) && node.value.endsWith(htmlComment.close);
+type CommentType = "begin" | "end";
 
-export type ReplacementTarget = {
-  region: Position;
-  url: string;
-  headingDepth: number;
-}
-
-const replaceUnpopulatedLink = (
-  { position, url }: SpecialLink, headingDepth: number
-): ReplacementTarget => ({ region: position, url, headingDepth })
-
-const replacePopulatedLink = (
-  { position: { start }, url }: SpecialLink, { position: { end } }: ClosingComment, headingDepth: number
-): ReplacementTarget => ({ region: { start, end }, url, headingDepth });
-
-export const extractRegion = (md: string, { region }: ReplacementTarget) => {
-  const lines = md.split("\n");
-  const { start, end } = zeroIndexed(region);
-  const extracted = lines.slice(start.line, end.line + 1);
-  extracted[0] = extracted[0].slice(start.column);
-  extracted[extracted.length - 1] = extracted[extracted.length - 1].slice(0, end.column);
-  return lined(...extracted);
+export const specialComment = {
+  _open: "<!--" as const,
+  _close: "-->" as const,
+  _flag: "parkdown" as const,
+  get begin() { return spaced(specialComment._open, specialComment._flag, "BEGIN", specialComment._close) },
+  get end() { return spaced(specialComment._open, specialComment._flag, "END", specialComment._close) },
 };
 
-export const replaceRegion = (md: string, target: Pick<ReplacementTarget, "region">, content: string) => {
-  const lines = md.split("\n");
-  const { start, end } = zeroIndexed(target.region);
-  const untouched = { pre: lines.slice(0, start.line), post: lines.slice(end.line + 1) };
-  const pre = lined(...untouched.pre, lines[start.line].slice(0, start.column))
-  const post = lined(lines[end.line].slice(end.column + 1), ...untouched.post);
-  return pre + content + post;
-}
+export type SpecialComment<T extends CommentType = CommentType> = PositionNode<"html"> & { value: typeof specialComment[T] };
 
-export const getReplacementContent = (target: Pick<ReplacementTarget, "url">, content: string, commentMsg = "replaced") =>
-  lined(specialLinkText(target), content, formClosingComment(commentMsg));
+export const isSpecialComment = <T extends CommentType>(type: T) =>
+  (node: Html): node is SpecialComment<T> => hasPosition(node) && node.value === specialComment[type];
+
+export type ReplacementTarget = {
+  url: string;
+  headingDepth: number;
+  inline: boolean;
+} & HasPosition;
+
+const replaceUnpopulated = (
+  { position, url, siblingCount }: SpecialLink, headingDepth: number
+): ReplacementTarget => ({ position, url, headingDepth, inline: siblingCount >= 1 })
+
+const replacePopulated = (
+  { position: { start }, url, siblingCount }: SpecialLink, { position: { end } }: SpecialComment<"end">, headingDepth: number
+): ReplacementTarget => ({ position: { start, end }, url, headingDepth, inline: siblingCount >= 1 });
+
+export const getReplacementContent = (target: Pick<ReplacementTarget, "url">, content: string, inline = true) =>
+  inline
+    ? lined(`${specialLinkText(target)}${specialComment.begin}`, content, specialComment.end)
+    : lined(specialLinkText(target), specialComment.begin, content, specialComment.end);
 
 export const nodeDepthFinder = (ast: AstRoot) => {
   const headingDepth = getAllPositionNodes(ast, "heading")
@@ -66,45 +57,89 @@ export const nodeDepthFinder = (ast: AstRoot) => {
   }
 }
 
-export const getReplacementTargets = (ast: AstRoot): ReplacementTarget[] => {
-  const findDepth = nodeDepthFinder(ast);
-  const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
-  const closingComments = getAllPositionNodes(ast, "html").filter(isClosingComment);
-  const replacements: ReplacementTarget[] = [];
+const errors = {
+  openingCommentDoesNotFollowLink: ({ position: { start } }: SpecialComment<"begin">) =>
+    new Error(`Opening comment (@${start.line}:${start.column}) does not follow link`),
+  closingCommentNotMatchedToOpeningComment: ({ position: { start } }: SpecialComment<"end">) =>
+    new Error(`Closing comment (@${start.line}:${start.column}) does not match to opening comment`),
+  openingCommentNotFollowedByClosingComment: ({ position: { start } }: SpecialComment<"begin">) =>
+    new Error(`Opening comment (@${start.line}:${start.column}) is not followed by a closing comment`),
+}
 
-  let commentPointer = 0;
+export const matchOpeningCommentsToLinks = (
+  markdown: string, links: SpecialLink[], openingComments: SpecialComment<"begin">[]
+) => {
+  const linkCandidates = [...links].sort(nodeSort);
+  const results: (SpecialLink | [SpecialLink, SpecialComment<"begin">])[] = [];
 
-  let comment = closingComments[commentPointer];
-  const nextComment = () => comment = closingComments[++commentPointer];
+  [...openingComments].sort(nodeSort.reverse).forEach(comment => {
+    while (linkCandidates.length > 0) {
+      const link = linkCandidates.pop()!;
+      if (link.position.start.offset < comment.position.start.offset) {
+        if (getContentInBetween(markdown, link, comment).trim() !== "")
+          throw errors.openingCommentDoesNotFollowLink(comment);
+        return results.push([link, comment]);
+      }
+      results.push(link);
+    }
+    throw errors.openingCommentDoesNotFollowLink(comment);
+  });
 
-  let link: SpecialLink;
+  results.push(...linkCandidates.reverse());
+  return results.reverse();
+}
 
-  const detectDanglingComments = () => {
-    while (comment && start(comment).line < start(link).line) {
-      console.error(`Dangling closing comment at ${start(comment).line}:${start(comment).column}`);
-      nextComment();
+type LinksAndOpeningComments = ReturnType<typeof matchOpeningCommentsToLinks>;
+
+export const matchCommentBlocks = (
+  matched: LinksAndOpeningComments, closingComments: SpecialComment<"end">[]
+) => {
+  const results: (SpecialLink | [SpecialLink, SpecialComment<"begin">, SpecialComment<"end">])[] =
+    matched.filter(item => !Array.isArray(item)).map(item => item as SpecialLink);
+
+  const openings = matched
+    .map((item, index) => Array.isArray(item) ? { node: item[1], index, type: "open" as const } : undefined)
+    .filter(Boolean);
+
+  const stack: Exclude<typeof openings[number], undefined>[] = [];
+
+  const combined = [
+    ...openings as typeof stack,
+    ...closingComments.map(node => ({ node, type: "close" as const }))
+  ].sort((a, b) => nodeSort(a.node, b.node));
+
+  for (const item of combined) {
+    if (item.type === "open") stack.push(item)
+    else {
+      const close = item.node as SpecialComment<"end">;
+      if (stack.length === 0)
+        throw errors.closingCommentNotMatchedToOpeningComment(close);
+      const open = stack.pop()!;
+      if (stack.length > 0) continue;
+      const existing = matched[open.index];
+      if (!Array.isArray(existing)) throw new Error("Unreachable")
+      results.push([existing[0], existing[1], close]);
     }
   }
 
-  for (let linkPointer = 0; linkPointer < specialLinks.length; linkPointer++) {
-    link = specialLinks[linkPointer];
-    detectDanglingComments();
-    const depth = findDepth(link) ?? 0;
-    const nextLink = specialLinks[linkPointer + 1];
-    if (nextLink && comment)
-      replacements.push(
-        start(nextLink).line <= start(comment).line
-          ? replaceUnpopulatedLink(link, depth)
-          : replacePopulatedLink(link, comment, depth)
-      )
-    else if (comment) replacements.push(replacePopulatedLink(link, comment, depth))
-    else replacements.push(replaceUnpopulatedLink(link, depth))
-    nextComment();
-  }
+  if (stack.length > 0)
+    throw errors.openingCommentNotFollowedByClosingComment(stack[0].node);
 
-  detectDanglingComments();
+  return results.sort((a, b) => nodeSort(Array.isArray(a) ? a[0] : a, Array.isArray(b) ? b[0] : b));
+}
 
-  return replacements;
+export const getReplacementTargets = (markdwn: string, ast: AstRoot): ReplacementTarget[] => {
+  const findDepth = nodeDepthFinder(ast);
+  const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
+  const htmlNodes = getAllPositionNodes(ast, "html").sort(nodeSort);
+  const openingComments = htmlNodes.filter(isSpecialComment("begin"));
+  const closingComments = htmlNodes.filter(isSpecialComment("end"));
+
+  const linksAndOpeningComments = matchOpeningCommentsToLinks(markdwn, specialLinks, openingComments);
+  return matchCommentBlocks(linksAndOpeningComments, closingComments).map(block =>
+    Array.isArray(block)
+      ? replacePopulated(block[0], block[2], findDepth(block[0])!)
+      : replaceUnpopulated(block, findDepth(block)!))
 }
 
 type GetRelativePathContent = (path: string) => string;
@@ -138,11 +173,10 @@ export const recursivelyApplyInclusions = (
   markdown: string,
   headingDepth: number,
   getRelativePathContent: GetRelativePathContent,
-  replacementComment = ""
 ) => {
   const ast = parse.md(markdown);
   let withAdjustments = applyHeadingDepth(markdown, headingDepth, ast);
-  const targets = getReplacementTargets(ast);
+  const targets = getReplacementTargets(markdown, ast);
 
   for (let i = targets.length - 1; i >= 0; i--) {
     const current = targets[i]
@@ -154,11 +188,11 @@ export const recursivelyApplyInclusions = (
         case "md":
           const extended = extendGetRelativePathContent(getRelativePathContent, current);
           const adjusted = recursivelyApplyInclusions(content, headingDepth, extended);
-          const wrapped = getReplacementContent(current, adjusted, replacementComment);
-          withAdjustments = replaceRegion(withAdjustments, current, wrapped);
+          const wrapped = getReplacementContent(current, adjusted);
+          withAdjustments = replaceWithContent(withAdjustments, wrapped, current);
           break;
         default:
-          withAdjustments = replaceRegion(withAdjustments, current, content);
+          withAdjustments = replaceWithContent(withAdjustments, content, current);
           break;
       }
     }

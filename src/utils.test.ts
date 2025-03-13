@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parse, nodeSort, getAllPositionNodes, } from "./utils";
+import { parse, nodeSort, getAllPositionNodes, extractContent, replaceWithContent, getContentInBetween, } from "./utils";
 
 describe(nodeSort.name, () => {
   test("should sort nodes by line number", () => {
@@ -27,8 +27,106 @@ describe(nodeSort.name, () => {
       previousColumn = node.position.start.column;
     }
   });
-
 })
+
+const getLinkAndCommentAst = (markdown: string) => {
+  const ast = parse.md(markdown);
+  const links = getAllPositionNodes(ast, "link");
+  expect(links.length).toBe(1);
+  const comments = getAllPositionNodes(ast, "html");
+  expect(comments.length).toBe(1);
+  return { link: links[0], comment: comments[0], ast, markdown };
+}
+
+describe(extractContent.name, () => {
+  test("should extract content from nodes", () => {
+    const { link, comment, ast, markdown } = getLinkAndCommentAst(`
+# Title
+
+[link](http://example.com)
+hello
+<!-- comment -->`
+    );
+
+    let content = extractContent(markdown, link);
+    expect(content).toBe("[link](http://example.com)");
+
+    content = extractContent(markdown, comment);
+    expect(content).toBe("<!-- comment -->");
+
+    content = extractContent(markdown, link, comment);
+    expect(content).toBe("[link](http://example.com)\nhello\n<!-- comment -->");
+    expect(content).toBe(extractContent(markdown, comment, link));
+  })
+})
+
+describe(replaceWithContent.name, () => {
+  test("should replace content with new content", () => {
+    const { link, comment, ast, markdown } = getLinkAndCommentAst(`
+# Title
+
+[link](http://example.com)
+hello
+<!-- comment -->
+
+ahoy!`
+    );
+    const content = replaceWithContent(markdown, "new content", link, comment);
+    expect(content).toBe("\n# Title\n\nnew content\n\nahoy!");
+  })
+});
+
+describe(getContentInBetween.name, () => {
+  test("should get content in between two multiline nodes", () => {
+    const { link, comment, ast, markdown } = getLinkAndCommentAst(`
+# Title
+
+[link](http://example.com)
+hello
+<!-- comment -->`
+    );
+    const content = getContentInBetween(markdown, link, comment);
+    expect(content).toBe("\nhello\n");
+  });
+
+  test("should get content in between two singleline nodes", () => {
+    const { link, comment, ast, markdown } = getLinkAndCommentAst(`
+# Title
+
+[link](http://example.com) hello <!-- comment -->`
+    );
+    const content = getContentInBetween(markdown, link, comment);
+    expect(content).toBe(" hello ");
+  })
+});
+
+type RepeatString<Char extends string, Count extends number, Result extends string = '', Counter extends any[] = []> =
+  Counter['length'] extends Count
+  ? Result
+  : RepeatString<Char, Count, `${Result}${Char}`, [...Counter, any]>;
+
+type ZeroTo10 = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+type UptoTenSpaces = { [i in ZeroTo10]: RepeatString<' ', i> }[ZeroTo10]
+
+/**
+ * @example 
+ * ```ts
+ * const { text, ast } = md(`
+ * # Title
+ * 
+ * [link](http://example.com)
+ * hello
+ * <!-- comment -->
+ * `)
+ * ```
+ * @param value 
+ * @returns 
+ */
+export const md = (value: `\n${string}\n${UptoTenSpaces}`) => {
+  const text = value.split("\n").slice(1, -1).join("\n");
+  return { text, ast: parse.md(text) }
+}
 
 interface PsuedoDir {
   [key: string]: PsuedoDir | string;

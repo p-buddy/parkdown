@@ -1,23 +1,26 @@
 import { describe, expect, test } from "vitest";
-import { getAllPositionNodes, nodeSort, parse } from "./utils";
-import { PsuedoFilesystem, lorem } from "./utils.test";
-import { visit, } from "unist-util-visit";
+import { extractContent, getAllPositionNodes, nodeSort, parse } from "./utils";
+import { PsuedoFilesystem, lorem, md } from "./utils.test";
 import { join } from "node:path";
 import {
   getReplacementTargets,
-  extractRegion,
   isSpecialLink,
   applyHeadingDepth,
-  replaceRegion,
   extendGetRelativePathContent,
   recursivelyApplyInclusions,
-  nodeDepthFinder
+  nodeDepthFinder,
+  specialComment,
+  matchCommentBlocks,
+  specialLinkText,
+  isSpecialComment,
+  matchOpeningCommentsToLinks
 } from "./include";
 
 
 describe(isSpecialLink.name, () => {
   const check = (md: string, expectation: boolean) =>
-    visit(parse.md(md), "link", (node) => expect(isSpecialLink(node)).toBe(expectation));
+    getAllPositionNodes(parse.md(md), "link")
+      .forEach(node => expect(isSpecialLink(node)).toBe(expectation));
 
   const cases = {
     "non-link": ["test", false],
@@ -96,167 +99,100 @@ describe('applyHeadingDepth', () => {
   });
 });
 
-describe('replaceRegion', () => {
-  test('should replace a single-line region', () => {
-    const lines = [
-      "# Heading",
-      "[](http://example.com)",
-      "Some other content"
-    ];
+describe(matchOpeningCommentsToLinks.name, () => {
+  test("happy path", () => {
+    const { text, ast } = md(`
+${specialLinkText({ url: "./disconnected" })}
 
-    const content = "This is new content";
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 2, column: 1 },
-        end: { line: 2, column: lines[1].length }
-      }
-    }, content);
+${specialLinkText({ url: "./inline" })} ${specialComment.begin}
 
-    expect(result).toBe([
-      "# Heading",
-      content,
-      "Some other content"
-    ].join("\n"));
-  });
+${specialLinkText({ url: "./multiline" })} 
+${specialComment.begin}
 
-  test('should replace a multi-line region', () => {
-    const lines = [
-      "# Heading",
-      "First line",
-      "Second line",
-      "Third line",
-      "Footer"
-    ];
+${specialLinkText({ url: "./mixed-disconnected" })} ${specialLinkText({ url: "./mixed-multiline" })} 
+${specialComment.begin}
+    `)
 
-    const content = "Replacement content";
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 2, column: 1 },
-        end: { line: 4, column: 10 }
-      }
-    }, content);
+    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
+    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
 
-    expect(result).toBe([
-      "# Heading",
-      "Replacement content",
-      "Footer"
-    ].join("\n"));
-  });
+    const matches = matchOpeningCommentsToLinks(text, specialLinks, openingComments);
+    expect(matches).toEqual([
+      specialLinks[0],
+      [specialLinks[1], openingComments[0]],
+      [specialLinks[2], openingComments[1]],
+      specialLinks[3],
+      [specialLinks[4], openingComments[2]],
+    ])
+  })
 
-  test('should handle partial line replacements', () => {
-    const markdown = "The quick brown fox jumps over the lazy dog";
-    const result = replaceRegion(markdown, {
-      region: {
-        start: { line: 1, column: "The quick ".length + 1 /** +1 since we want to start at the 'b' of brown */ },
-        end: { line: 1, column: "The quick brown".length }
-      }
-    }, "fast");
+  test("non-whitespace content between link and opening comment", () => {
+    const { text, ast } = md(`
+${specialLinkText({ url: "./inline" })} hh ${specialComment.begin}
+    `)
 
-    expect(result).toBe("The quick fast fox jumps over the lazy dog");
-  });
+    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
+    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
 
-  test('should handle replacement at start of document', () => {
-    const lines = [
-      "Replace this line",
-      "Keep this line",
-      "And this one"
-    ];
+    expect(() => matchOpeningCommentsToLinks(text, specialLinks, openingComments)).toThrow();
+  })
 
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 17 }
-      }
-    }, "New first line");
+  test("unmatched opening comment", () => {
+    const { text, ast } = md(`
+hh ${specialComment.begin}
+    `)
 
-    expect(result).toBe([
-      "New first line",
-      "Keep this line",
-      "And this one"
-    ].join("\n"));
-  });
+    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
+    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
 
-  test('should handle replacement at end of document', () => {
-    const lines = [
-      "Keep this line",
-      "And this one",
-      "Replace last line"
-    ];
+    expect(() => matchOpeningCommentsToLinks(text, specialLinks, openingComments)).toThrow();
+  })
+})
 
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 3, column: 1 },
-        end: { line: 3, column: 17 }
-      }
-    }, "New last line");
 
-    expect(result).toBe([
-      "Keep this line",
-      "And this one",
-      "New last line"
-    ].join("\n"));
-  });
+describe(matchCommentBlocks.name, () => {
+  test("happy path", () => {
+    const { text, ast } = md(`
+${specialLinkText({ url: "./inline" })} ${specialComment.begin}
+${specialComment.end}
 
-  test('should handle multi-line replacement with partial lines', () => {
-    const lines = [
-      "Start of first line <-- keep left of arrow",
-      "Remove all of this line",
-      "End of last line --> keep only this"
-    ];
+${specialLinkText({ url: "./multiline" })} ${specialComment.begin}
+HELLO WORLD
+${specialComment.end}
 
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 1, column: "Start of first line".length + 1 },
-        end: { line: 3, column: "End of last line --> ".length }
-      }
-    }, " inserted text ");
+${specialLinkText({ url: "./not-populated" })}
 
-    expect(result).toBe("Start of first line inserted text keep only this");
-  });
+${specialLinkText({ url: "./nested" })} ${specialComment.begin}
 
-  test('should preserve empty lines in replacement content', () => {
-    const lines = [
-      "First line",
-      "Replace this",
-      "And this",
-      "Last line"
-    ];
+${specialLinkText({ url: "./child" })}
+${specialComment.begin}
+${specialLinkText({ url: "./grandchild" })} ${specialComment.begin}
+${specialComment.end}
+${specialComment.end}
+${specialComment.end}
 
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 2, column: 1 },
-        end: { line: 3, column: 9 }
-      }
-    }, "New content\n\nWith empty line");
+${specialLinkText({ url: "./single-line" })} ${specialComment.begin} ${specialComment.end}
 
-    expect(result).toBe([
-      "First line",
-      "New content\n\nWith empty line",
-      "Last line"
-    ].join("\n"));
-  });
+${specialLinkText({ url: "./not-populated" })}
+    `)
 
-  test('should handle empty replacement content', () => {
-    const lines = [
-      "Keep this",
-      "Remove this",
-      "Keep this too"
-    ];
+    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
+    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
+    const closingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("end"));
 
-    const result = replaceRegion(lines.join("\n"), {
-      region: {
-        start: { line: 2, column: 1 },
-        end: { line: 2, column: 12 }
-      }
-    }, "");
+    const matches = matchOpeningCommentsToLinks(text, specialLinks, openingComments);
+    const blocks = matchCommentBlocks(matches, closingComments);
 
-    expect(result).toBe([
-      "Keep this",
-      "",
-      "Keep this too"
-    ].join("\n"));
-  });
-});
+    expect(blocks).toEqual([
+      [specialLinks[0], openingComments[0], closingComments[0]],
+      [specialLinks[1], openingComments[1], closingComments[1]],
+      specialLinks[2],
+      [specialLinks[3], openingComments[2], closingComments[4]],
+      [specialLinks[6], openingComments[5], closingComments[5]],
+      specialLinks[7],
+    ])
+  })
+})
 
 describe(extendGetRelativePathContent.name, () => {
   test('should call original function with resolved path', () => {
@@ -286,15 +222,18 @@ describe(recursivelyApplyInclusions.name, () => {
       "README.md": `# Main heading
 
       [](./child/README.md)
-      THIS SHOULD BE DELETED <!-- parkdown END -->
+      ${specialComment.begin}
+      THIS SHOULD BE DELETED 
+      ${specialComment.end}
 
       End`,
       child: {
         "README.md": `# Child heading
 
         [](./grandchild/README.md)
+        ${specialComment.begin}
         THIS SHOULD BE DELETED 
-        <!-- parkdown END -->`,
+        ${specialComment.end}`,
         grandchild: {
           "README.md": `# Grandchild heading
           
@@ -315,72 +254,72 @@ describe(getReplacementTargets.name, () => {
   test('should return empty array for no special links or comments', () => {
     const emptyMarkdown = "# Just a heading\n\nNo special links or comments here.";
     const emptyAst = parse.md(emptyMarkdown);
-    expect(getReplacementTargets(emptyAst)).toEqual([]);
+    expect(getReplacementTargets(emptyMarkdown, emptyAst)).toEqual([]);
   });
 
   test('should handle single unpopulated special link (no closing comment)', () => {
     const singleLinkMarkdown = "# Heading\n\n[](http://example.com)";
     const singleLinkAst = parse.md(singleLinkMarkdown);
-    const singleLinkTargets = getReplacementTargets(singleLinkAst);
+    const singleLinkTargets = getReplacementTargets(singleLinkMarkdown, singleLinkAst);
     expect(singleLinkTargets.length).toBe(1);
     expect(singleLinkTargets[0].url).toBe("http://example.com");
     expect(singleLinkTargets[0].headingDepth).toBe(1);
-    expect(extractRegion(singleLinkMarkdown, singleLinkTargets[0])).toBe("[](http://example.com)");
+    expect(extractContent(singleLinkMarkdown, singleLinkTargets[0])).toBe("[](http://example.com)");
   });
 
   test('should handle special link with closing comment', () => {
     const linkWithCommentMarkdown =
       "# Main heading\n\n" +
       "## Section\n\n" +
-      "[](./file.md)\n\n" +
-      "Some content\n\n" +
-      "<!-- parkdown END test -->";
+      "[](./file.md)\n" +
+      specialComment.begin + "\n" +
+      "Some content\n" +
+      specialComment.end;
     const linkWithCommentAst = parse.md(linkWithCommentMarkdown);
-    const linkWithCommentTargets = getReplacementTargets(linkWithCommentAst);
+    const linkWithCommentTargets = getReplacementTargets(linkWithCommentMarkdown, linkWithCommentAst);
     expect(linkWithCommentTargets.length).toBe(1);
     expect(linkWithCommentTargets[0].url).toBe("./file.md");
     expect(linkWithCommentTargets[0].headingDepth).toBe(2);
     expect(
-      extractRegion(linkWithCommentMarkdown, linkWithCommentTargets[0])
-    ).toBe("[](./file.md)\n\nSome content\n\n<!-- parkdown END test -->");
+      extractContent(linkWithCommentMarkdown, linkWithCommentTargets[0])
+    ).toBe(`[](./file.md)\n${specialComment.begin}\nSome content\n${specialComment.end}`);
   });
 
   test('should handle multiple links and comments', () => {
     const complexMarkdown =
       "# Main heading\n\n" +
       "## First section\n\n" +
-      "[](./first.md)\n\n" +
-      "Some content\n\n" +
-      "<!-- parkdown END first -->\n\n" +
+      "[](./first.md)\n" +
+      specialComment.begin + "\n" +
+      "Some content\n" +
+      specialComment.end + "\n\n" +
       "## Second section\n\n" +
-      "[](./second.md)\n\n" +
-      "More content\n\n" +
-      "<!-- parkdown END second -->\n\n" +
+      "[](./second.md)\n" +
+      specialComment.begin + "\n" +
+      "More content\n" +
+      specialComment.end + "\n\n" +
       "## Third section\n\n" +
       "[](http://example.com)";
     const complexAst = parse.md(complexMarkdown);
-    const complexTargets = getReplacementTargets(complexAst);
+    const complexTargets = getReplacementTargets(complexMarkdown, complexAst);
     expect(complexTargets.length).toBe(3);
 
-    // First replacement target should be the populated link (with comment)
     expect(complexTargets[0].url).toBe("./first.md");
     expect(complexTargets[0].headingDepth).toBe(2);
     expect(
-      extractRegion(complexMarkdown, complexTargets[0])
-    ).toBe("[](./first.md)\n\nSome content\n\n<!-- parkdown END first -->");
+      extractContent(complexMarkdown, complexTargets[0])
+    ).toBe(`[](./first.md)\n${specialComment.begin}\nSome content\n${specialComment.end}`);
 
-    // Second replacement target should be the populated link (with comment)
     expect(complexTargets[1].url).toBe("./second.md");
     expect(complexTargets[1].headingDepth).toBe(2);
     expect(
-      extractRegion(complexMarkdown, complexTargets[1])
-    ).toBe("[](./second.md)\n\nMore content\n\n<!-- parkdown END second -->");
+      extractContent(complexMarkdown, complexTargets[1])
+    ).toBe(`[](./second.md)\n${specialComment.begin}\nMore content\n${specialComment.end}`);
 
-    // Third replacement target should be the unpopulated link (no comment)
     expect(complexTargets[2].url).toBe("http://example.com");
     expect(complexTargets[2].headingDepth).toBe(2);
     expect(
-      extractRegion(complexMarkdown, complexTargets[2])
+      extractContent(complexMarkdown, complexTargets[2])
     ).toBe("[](http://example.com)");
   });
 });
