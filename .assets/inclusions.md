@@ -20,7 +20,7 @@ What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.single.md?tag=code)
 
-What is rendered (**_after_** processing):
+What is rendered (**_after_** processing -- same as [Option B](#option-b-multi-line)):
 
 [](./populated/inline.single.md?tag=quote)
 
@@ -38,7 +38,7 @@ What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.multi.md?tag=code)
 
-What is rendered (**_after_** processing):
+What is rendered (**_after_** processing -- same as [Option A](#option-a-single-line)):
 
 [](./populated/inline.multi.md?tag=quote)
 

@@ -39,20 +39,20 @@ What your markdown file contains (**_after_** processing):
 <!-- parkdown BEGIN -->
 ```md
 Before: [](<url>) <!-- parkdown Begin -->
-Included-1
-Included-2 <!-- parkdown End --> :After
+...Included Content...
+...Included Content... <!-- parkdown End --> :After
 ```
 <!-- parkdown END -->
 
-What is rendered (**_after_** processing):
+What is rendered (**_after_** processing -- same as [Option B](#option-b-multi-line)):
 
 [](./populated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
 <blockquote>
 
 Before: [](<url>) <!-- parkdown Begin -->
-Included-1
-Included-2 <!-- parkdown End --> :After
+...Included Content...
+...Included Content... <!-- parkdown End --> :After
 
 </blockquote>
 
@@ -92,13 +92,13 @@ What your markdown file contains (**_after_** processing):
 ```md
 Before: 
 [](<url>) <!-- parkdown Begin (inline) -->
-Included-1
-Included-2 <!-- parkdown End (inline) --> 
+...Included Content...
+...Included Content... <!-- parkdown End (inline) --> 
 :After
 ```
 <!-- parkdown END -->
 
-What is rendered (**_after_** processing):
+What is rendered (**_after_** processing -- same as [Option A](#option-a-single-line)):
 
 [](./populated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -106,8 +106,8 @@ What is rendered (**_after_** processing):
 
 Before: 
 [](<url>) <!-- parkdown Begin (inline) -->
-Included-1
-Included-2 <!-- parkdown End (inline) --> 
+...Included Content...
+...Included Content... <!-- parkdown End (inline) --> 
 :After
 
 </blockquote>
@@ -154,8 +154,8 @@ Before:
 
 [](<url>)
 <!-- parkdown Begin  -->
-Include-1
-Include-2
+...Included Content...
+...Included Content...
 <!-- parkdown End  -->
 
 :After
@@ -172,8 +172,8 @@ Before:
 
 [](<url>)
 <!-- parkdown Begin  -->
-Include-1
-Include-2
+...Included Content...
+...Included Content...
 <!-- parkdown End  -->
 
 :After

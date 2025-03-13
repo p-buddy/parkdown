@@ -2,8 +2,8 @@ Before:
 
 [](<url>)
 <!-- parkdown Begin  -->
-Include-1
-Include-2
+...Included Content...
+...Included Content...
 <!-- parkdown End  -->
 
 :After
