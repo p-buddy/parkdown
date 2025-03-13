@@ -12,8 +12,6 @@ Inline inclusions occur when a "[special link]()" is
 
 #### Option A (single line)
 
-##### Unpopulated
-
 What you write:
 
 [](./unpopulated/inline.single.md?tag=code)
@@ -23,7 +21,7 @@ Before: [](<url>) :After
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_before_** processing):
 
 [](./unpopulated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -35,9 +33,7 @@ Before: [](<url>) :After
 
 <!-- parkdown END -->
 
-##### Populated
-
-What your markdown file contains:
+What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.single.md?tag=code)
 <!-- parkdown BEGIN -->
@@ -48,7 +44,7 @@ Included-2 <!-- parkdown End --> :After
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_after_** processing):
 
 [](./populated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -64,8 +60,6 @@ Included-2 <!-- parkdown End --> :After
 
 #### Option B (multi line)
 
-##### Unpopulated
-
 What you write:
 
 [](./unpopulated/inline.multi.md?tag=code)
@@ -77,7 +71,7 @@ Before:
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_before_** processing):
 
 [](./unpopulated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -91,9 +85,7 @@ Before:
 
 <!-- parkdown END -->
 
-##### Populated
-
-What your markdown file contains:
+What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.multi.md?tag=code)
 <!-- parkdown BEGIN -->
@@ -106,7 +98,7 @@ Included-2 <!-- parkdown End (inline) -->
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_after_** processing):
 
 [](./populated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -124,8 +116,6 @@ Included-2 <!-- parkdown End (inline) -->
 
 ### Block
 
-#### Unpopulated
-
 What you write:
 
 [](./unpopulated/block.md?tag=code)
@@ -139,7 +129,7 @@ Before:
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_before_** processing):
 
 [](./unpopulated/block.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -155,10 +145,7 @@ Before:
 
 <!-- parkdown END -->
 
-
-#### Populated
-
-What your markdown file contains:
+What your markdown file contains (**_after_** processing):
 
 [](./populated/block.md?tag=code)
 <!-- parkdown BEGIN -->
@@ -175,7 +162,7 @@ Include-2
 ```
 <!-- parkdown END -->
 
-What is rendered:
+What is rendered (**_after_** processing):
 
 [](./populated/block.md?tag=quote)
 <!-- parkdown BEGIN -->
