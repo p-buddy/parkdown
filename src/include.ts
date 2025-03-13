@@ -1,3 +1,4 @@
+import { URL, URLSearchParams } from "node:url";
 import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween } from "./utils";
 import type { AstRoot, MarkdownNode, Link, PositionNode, HasPosition } from "./utils"
 import { dirname, join } from "node:path";
@@ -39,20 +40,20 @@ const replacePopulated = (
   { position: { start }, url, siblingCount }: SpecialLink, { position: { end } }: SpecialComment<"end">, headingDepth: number
 ): ReplacementTarget => ({ position: { start, end }, url, headingDepth, inline: siblingCount >= 1 });
 
-export const getReplacementContent = (target: Pick<ReplacementTarget, "url">, content: string, inline = true) =>
-  inline
+export const getReplacementContent = (target: Pick<ReplacementTarget, "url" | "inline">, content: string) =>
+  target.inline
     ? `${specialLinkText(target)} ${specialComment.begin} ${content} ${specialComment.end}` as const
     : lined(specialLinkText(target), specialComment.begin, content, specialComment.end);
 
 export const nodeDepthFinder = (ast: AstRoot) => {
   const headingDepth = getAllPositionNodes(ast, "heading")
     .reduce((acc, { position, depth }) => acc.set(position.start.line, depth), new Map<number, number>())
-  return (node: MarkdownNode) => {
-    if (!hasPosition(node)) return undefined;
+  return (node: HasPosition) => {
     for (let i = node.position.start.line; i >= 1; i--) {
       const depth = headingDepth.get(i);
       if (depth) return depth;
     }
+    return 0;
   }
 }
 
@@ -121,17 +122,18 @@ export const matchCommentBlocksToLinks = (
   return results.reverse();
 }
 
-export const getReplacementTargets = (markdwn: string, ast: AstRoot): ReplacementTarget[] => {
+export const getReplacementTargets = (markdwn: string, ast?: AstRoot): ReplacementTarget[] => {
+  ast ??= parse.md(markdwn);
   const findDepth = nodeDepthFinder(ast);
   const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
   const htmlNodes = getAllPositionNodes(ast, "html").sort(nodeSort);
   const openingComments = htmlNodes.filter(isSpecialComment("begin"));
   const closingComments = htmlNodes.filter(isSpecialComment("end"));
   const blocks = getTopLevelCommentBlocks(openingComments, closingComments);
-  return matchCommentBlocksToLinks(markdwn, specialLinks, blocks)
-    .map(block => Array.isArray(block)
-      ? replacePopulated(block[0], block[1].close, findDepth(block[0])!)
-      : replaceUnpopulated(block, findDepth(block)!))
+  const resolved = matchCommentBlocksToLinks(markdwn, specialLinks, blocks)
+  return resolved.map(block => Array.isArray(block)
+    ? replacePopulated(block[0], block[1].close, findDepth(block[0]))
+    : replaceUnpopulated(block, findDepth(block)))
 }
 
 type GetRelativePathContent = (path: string) => string;
@@ -146,6 +148,7 @@ const clampHeadingSum = (...toSum: number[]) => {
 }
 
 export const applyHeadingDepth = (markdown: string, headingDepth: number, ast?: AstRoot) => {
+  if (headingDepth === 0) return markdown;
   ast ??= parse.md(markdown);
   const nodes = getAllPositionNodes(ast, "heading");
   const lines = markdown.split("\n");
@@ -160,13 +163,20 @@ export const applyHeadingDepth = (markdown: string, headingDepth: number, ast?: 
   return lines.join("\n");
 }
 
+const codeblock = (language: string, content: string) => `\`\`\`${language}\n${content}\n\`\`\``;
+
 export const recursivelyApplyInclusions = (
   markdown: string,
   headingDepth: number,
   getRelativePathContent: GetRelativePathContent,
 ) => {
+  markdown = getReplacementTargets(markdown)
+    .reverse()
+    .sort(nodeSort.reverse)
+    .reduce((md, target) => replaceWithContent(md, specialLinkText(target), target), markdown);
+  markdown = applyHeadingDepth(markdown, headingDepth);
+
   const ast = parse.md(markdown);
-  let withAdjustments = applyHeadingDepth(markdown, headingDepth, ast);
   const targets = getReplacementTargets(markdown, ast);
 
   for (let i = targets.length - 1; i >= 0; i--) {
@@ -175,22 +185,27 @@ export const recursivelyApplyInclusions = (
     if (url.startsWith("./") || url.startsWith("../")) {
       const content = getRelativePathContent(url);
       const [extension, query] = url.split(".").pop()?.split("?") ?? [];
+      const params = new URLSearchParams(query ?? "");
+
+      let adjusted: string;
       switch (extension) {
         case "md":
-          const extended = extendGetRelativePathContent(getRelativePathContent, current);
-          const adjusted = recursivelyApplyInclusions(content, headingDepth, extended);
-          const wrapped = getReplacementContent(current, adjusted);
-          withAdjustments = replaceWithContent(withAdjustments, wrapped, current);
-          break;
+          if (!params.has("code")) {
+            const extended = extendGetRelativePathContent(getRelativePathContent, current);
+            adjusted = recursivelyApplyInclusions(content, headingDepth, extended);
+            break;
+          }
         default:
-          withAdjustments = replaceWithContent(withAdjustments, content, current);
+          adjusted = codeblock(extension, content);
           break;
       }
+      const wrapped = getReplacementContent(current, adjusted);
+      markdown = replaceWithContent(markdown, wrapped, current);
     }
     else if (url.startsWith("http"))
-      throw new Error("HTTP links are not implemented yet");
+      throw new Error("External web links are not implemented yet");
     else
       throw new Error(`Unsupported link type: ${url}`);
   }
-  return withAdjustments;
+  return markdown;
 }

@@ -60,7 +60,11 @@ What you write:
 
 What is rendered:
 
-> [](./unpopulated/block.md)
+<blockquote>
+
+[](./unpopulated/block.md)
+
+</blockquote>
 
 ### Populated
 
@@ -70,4 +74,6 @@ What your markdown file contains:
 
 What is rendered:
 
-> [](./populated/block.md)
+<blockquote>
+[](./populated/block.md)
+</blockquote>

@@ -12,6 +12,7 @@ import {
   specialComment,
   specialLinkText,
   isSpecialComment,
+  getTopLevelCommentBlocks,
 } from "./include";
 
 
@@ -195,6 +196,36 @@ ${specialLinkText({ url: "./not-populated" })}
 })
 */
 
+describe(getTopLevelCommentBlocks.name, () => {
+  test("problematic case", () => {
+    const { ast } = md(`
+# Main heading
+
+[](./child/README.md)
+<!-- parkdown BEGIN -->
+## Child heading
+
+[](./grandchild/README.md)
+<!-- parkdown BEGIN -->
+### Grandchild heading
+
+Hello!
+<!-- parkdown END -->
+<!-- parkdown END -->
+
+End
+      `);
+    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
+    const closingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("end"));
+    expect(openingComments.length).toBe(2);
+    expect(closingComments.length).toBe(2);
+    const blocks = getTopLevelCommentBlocks(openingComments, closingComments);
+    expect(blocks.length).toBe(1);
+    expect(blocks[0].open).toBe(openingComments[0]);
+    expect(blocks[0].close).toBe(closingComments[1]);
+  })
+});
+
 describe(extendGetRelativePathContent.name, () => {
   test('should call original function with resolved path', () => {
     const filesystem = new PsuedoFilesystem({
@@ -217,37 +248,75 @@ describe(extendGetRelativePathContent.name, () => {
 });
 
 describe(recursivelyApplyInclusions.name, () => {
-  test('should apply modifications to all links in a markdown file', () => {
-
+  test("basic unpopulated", () => {
     const filesystem = new PsuedoFilesystem({
-      "README.md": `# Main heading
+      "README.md": md.text(`
+# Main heading
 
-      [](./child/README.md)
-      ${specialComment.begin}
-      THIS SHOULD BE DELETED 
-      ${specialComment.end}
+[](./child/README.md)
 
-      End`,
+End parent
+      `),
       child: {
-        "README.md": `# Child heading
+        "README.md": md.text(`
+# Child heading
 
-        [](./grandchild/README.md)
-        ${specialComment.begin}
-        THIS SHOULD BE DELETED 
-        ${specialComment.end}`,
-        grandchild: {
-          "README.md": `# Grandchild heading
-          
-          Hello!`
-        }
+End child
+        `),
       }
-    }, { dedent: true });
+    });
 
     const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
 
     const result = recursivelyApplyInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
-    console.log(result);
+    expect(result).toBe(md.text(`
+# Main heading
 
+[](./child/README.md)
+${specialComment.begin}
+## Child heading
+
+End child
+${specialComment.end}
+
+End parent
+      `))
+    expect(result).toBe(recursivelyApplyInclusions(result, 0, fromRoot));
+  });
+
+  test('should apply modifications to all top-level links in a markdown file', () => {
+
+    const filesystem = new PsuedoFilesystem({
+      "README.md": md.text(`
+# Main heading
+
+[](./child/README.md)
+
+End
+      `),
+      child: {
+        "README.md": md.text(`
+# Child heading
+
+[](./grandchild/README.md)
+${specialComment.begin}
+THIS SHOULD BE DELETED 
+${specialComment.end}
+        `),
+        grandchild: {
+          "README.md": md.text(`
+# Grandchild heading
+
+Hello!
+          `),
+        }
+      }
+    });
+
+    const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
+
+    const result = recursivelyApplyInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    expect(result).toBe(recursivelyApplyInclusions(result, 0, fromRoot));
   });
 });
 

@@ -128,15 +128,17 @@ export const md = (value: `\n${string}\n${UptoTenSpaces}`) => {
   return { text, ast: parse.md(text) }
 }
 
+
+md.text = (value: Parameters<typeof md>[0]) => md(value).text;
+
 interface PsuedoDir {
   [key: string]: PsuedoDir | string;
 }
 
 export class PsuedoFilesystem {
-  constructor(private readonly root: PsuedoDir, options?: { setContentToPath?: boolean, dedent?: boolean }) {
-    const { setContentToPath = false, dedent = false } = options ?? {};
+  constructor(readonly root: PsuedoDir, options?: { setContentToPath?: boolean }) {
+    const { setContentToPath = false } = options ?? {};
     if (setContentToPath) PsuedoFilesystem.SetAllFileContentToPath(this.root);
-    if (dedent) PsuedoFilesystem.DedentAllFileContent(this.root);
   }
 
   getFileFromAbsolutePath(path: string) {
@@ -149,26 +151,6 @@ export class PsuedoFilesystem {
       const path = prefix ? `${prefix}/${key}` : key;
       if (typeof value === "string") root[key] = path;
       else this.SetAllFileContentToPath(value, path);
-    }
-  }
-
-  static DedentAllFileContent(root: PsuedoDir) {
-    for (const key in root) {
-      const value = root[key];
-      if (typeof value !== "string") return this.DedentAllFileContent(value);
-      const lines = value.split('\n');
-      const nonEmptyLines = lines.filter(line => line.trim().length > 0);
-
-      if (nonEmptyLines.length === 0) continue;
-
-      const indentLevels = nonEmptyLines.map((line, index) => {
-        const match = line.match(/^( *)/);
-        const dedent = match ? match[1].length : 0;
-        return index === 0 && dedent === 0 ? Infinity : dedent;
-      });
-      const minIndent = Math.min(...indentLevels);
-      if (minIndent === 0) continue;
-      root[key] = value.replace(new RegExp(`^[ ]{${minIndent}}`, 'gm'), '');
     }
   }
 }
