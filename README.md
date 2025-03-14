@@ -4,13 +4,33 @@
 <!-- parkdown BEGIN -->
 ## Inclusion
 
-How you express your [parkdown]() blocks depends on how you want them to be rendered -- either [Inline](#inline) or as a [Block](#block).
+You can _include_ other files' content within your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` corresponds to either:
+  - a local file, e.g. `[](./other.md)` or `[](../root.md)`
+  - **_COMING SOON_**: An external link 
 
-### Inline
+Markdown renderers shouldn't display these links, but [parkdown]() can process and populate them (and also hopefully your editor makes them easy to navigate to).
 
-Inline inclusions occur when a "[special link]()" is
+See how to author these links in more detail below, and then tell [parkdown]() to process your markdown file with either the [cli]() or via the `processMarkdownIncludes` export:
 
-#### Option A (single line)
+[](./processIncludes.example.ts)
+<!-- parkdown BEGIN -->
+```ts
+import { processMarkdownIncludes } from "../src";
+
+const file = "README.md";
+const writeFile = true;
+
+processMarkdownIncludes(file, writeFile);
+```
+<!-- parkdown END -->
+
+### Authoring Inclusions
+
+#### Inline
+
+Inline inclusions occur when your e "[special link]()" is
+
+##### Option A (single line)
 
 What you write:
 
@@ -21,7 +41,7 @@ Before: [](<url>) :After
 ```
 <!-- parkdown END -->
 
-What is rendered (**_before_** processing):
+What is rendered (**_before_** processing, sama as [Option B](#option-b-multi-line)):
 
 [](./unpopulated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -44,7 +64,7 @@ Before: [](<url>) <!-- parkdown Begin -->
 ```
 <!-- parkdown END -->
 
-What is rendered (**_after_** processing -- same as [Option B](#option-b-multi-line)):
+What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
 
 [](./populated/inline.single.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -58,7 +78,7 @@ Before: [](<url>) <!-- parkdown Begin -->
 
 <!-- parkdown END -->
 
-#### Option B (multi line)
+##### Option B (multi line)
 
 What you write:
 
@@ -71,7 +91,7 @@ Before:
 ```
 <!-- parkdown END -->
 
-What is rendered (**_before_** processing):
+What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
 
 [](./unpopulated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -98,7 +118,7 @@ Before:
 ```
 <!-- parkdown END -->
 
-What is rendered (**_after_** processing -- same as [Option A](#option-a-single-line)):
+What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
 
 [](./populated/inline.multi.md?tag=quote)
 <!-- parkdown BEGIN -->
@@ -114,7 +134,7 @@ Before:
 
 <!-- parkdown END -->
 
-### Block
+##### Block
 
 What you write:
 

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@flex-development/import-regex':
+        specifier: ^3.0.0
+        version: 3.0.0
       remark-parse:
         specifier: ^11.0.0
         version: 11.0.0
@@ -30,6 +33,9 @@ importers:
       '@types/unist':
         specifier: ^3.0.3
         version: 3.0.3
+      ts-dedent:
+        specifier: ^2.2.0
+        version: 2.2.0
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
@@ -219,6 +225,10 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@flex-development/import-regex@3.0.0':
+    resolution: {integrity: sha512-ktj5GR6+RqUp6NM6ePjQW3L5bpShdqsOYvrQu6z2qqK1NiF2GSPwsGI8gw/qxGXZ8bU1LZS78/iMUMx/ZvoJ5Q==}
+    engines: {node: '>=16.20.0', yarn: 4.0.0-rc.39}
 
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
@@ -855,6 +865,10 @@ packages:
   trough@2.2.0:
     resolution: {integrity: sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw==}
 
+  ts-dedent@2.2.0:
+    resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}
+    engines: {node: '>=6.10'}
+
   typescript@5.7.3:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
     engines: {node: '>=14.17'}
@@ -1090,6 +1104,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.1':
     optional: true
+
+  '@flex-development/import-regex@3.0.0': {}
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
@@ -1814,6 +1830,8 @@ snapshots:
   tinyspy@3.0.2: {}
 
   trough@2.2.0: {}
+
+  ts-dedent@2.2.0: {}
 
   typescript@5.7.3: {}
 
