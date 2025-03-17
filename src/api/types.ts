@@ -74,4 +74,5 @@ export type ParsingCandidates<T extends MethodDefinitions> = ExpandRecursively<{
   [k in keyof ParseMethodDefinition<T[number]>]: ParseMethodDefinition<T[number]>[k] & { name: k }
 }[keyof ParseMethodDefinition<T[number]>]>;
 
-export type CreateParser = <T extends MethodDefinitions>(definitions: T) => ((query: string) => ParsingCandidates<typeof definitions>);
+export type Parser<T extends MethodDefinitions> = (query: string) => ParsingCandidates<T>;
+export type CreateParser = <T extends MethodDefinitions>(definitions: T) => Parser<T>;

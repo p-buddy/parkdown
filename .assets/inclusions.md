@@ -21,7 +21,7 @@ npx parkdown # defaults to processing inclusions in the 'README.md' file of the 
 
 ### `populateMarkdownIncludes` export
 
-[](./code/inclusions.ts)
+[](./code/inclusions.ts?region=replace(pkg,'''parkdown'''))
 
 ## Authoring
 
@@ -39,37 +39,37 @@ There are two equivalent ways to author inline inclusions, and which you choose 
 
 What you write:
 
-[](./unpopulated/inline.single.md?tag=code)
+[](./unpopulated/inline.single.md?wrap=code)
 
 What is rendered (**_before_** processing, sama as [Option B](#option-b-multi-line)):
 
-[](./unpopulated/inline.single.md?tag=quote)
+[](./unpopulated/inline.single.md?wrap=quote&inline)
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/inline.single.md?tag=code)
+[](./populated/inline.single.md?wrap=code)
 
 What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
 
-[](./populated/inline.single.md?tag=quote)
+[](./populated/inline.single.md?wrap=quote&inline)
 
 #### Option B (multi line)
 
 What you write:
 
-[](./unpopulated/inline.multi.md?tag=code)
+[](./unpopulated/inline.multi.md?wrap=code)
 
 What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
 
-[](./unpopulated/inline.multi.md?tag=quote)
+[](./unpopulated/inline.multi.md?wrap=quote&inline)
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/inline.multi.md?tag=code)
+[](./populated/inline.multi.md?wrap=code)
 
 What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
 
-[](./populated/inline.multi.md?tag=quote)
+[](./populated/inline.multi.md?wrap=quote&inline)
 
 ### Block
 
@@ -77,42 +77,45 @@ Block inclusions occur when your "empty" link is the **only** node in a [paragra
 
 What you write:
 
-[](./unpopulated/block.md?tag=code)
+[](./unpopulated/block.md?wrap=code)
 
 What is rendered (**_before_** processing):
 
-[](./unpopulated/block.md?tag=quote)
+[](./unpopulated/block.md?wrap=quote)
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/block.md?tag=code)
+[](./populated/block.md?wrap=code)
 
 What is rendered (**_after_** processing):
 
-[](./populated/block.md?tag=quote)
+[](./populated/block.md?wrap=quote)
 
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how they're processed.
+
+#### Processing Order
+
+[](../src/include.ts?&region=extract(query))
 
 #### `skip`
 ```md
 [](...?skip)
 ```
 
-[](../src/include.ts?tag=dropdown(See-default-behavior.)&boundary=Default-Behavior)
+[](../src/include.ts?wrap=dropdown(See-default-behavior.)&region=extract(Default-Behavior),replace(...))
 
-#### `tag`
+#### `wrap`
 ```md
-[](...?tag=code)
+[](...?wrap=code)
 ```
 
-#### `boundary`
+#### `region`
 
 ```md
 [](...?boundary=example)
 ```
-
 
 
 ## Removing populated inclusions
@@ -139,4 +142,4 @@ npx parkdown -d # defaults to processing the 'README.md' file of the current wor
 
 ### `depopulateMarkdownIncludes` export
 
-[](./code/depopulate.ts)
+[](./code/depopulate.ts?region=replace(pkg,'''parkdown'''))

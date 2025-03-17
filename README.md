@@ -1,4 +1,4 @@
-# parkdown
+# parkdown (p▼)
 
 [](./.assets/inclusions.md)
 <!-- parkdown BEGIN -->
@@ -25,10 +25,10 @@ npx parkdown # defaults to processing inclusions in the 'README.md' file of the 
 
 #### `populateMarkdownIncludes` export
 
-[](./code/inclusions.ts)
+[](.assets/code/inclusions.ts?region=replace(pkg,'''parkdown'''))
 <!-- parkdown BEGIN -->
 ```ts
-import { populateMarkdownInclusions } from "../../src";
+import { populateMarkdownInclusions } from "parkdown";
 
 const file = "README.md";
 const writeFile = true;
@@ -53,7 +53,7 @@ There are two equivalent ways to author inline inclusions, and which you choose 
 
 What you write:
 
-[](./unpopulated/inline.single.md?tag=code)
+[](.assets/unpopulated/inline.single.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: [](<url>) :After
@@ -62,19 +62,14 @@ Before: [](<url>) :After
 
 What is rendered (**_before_** processing, sama as [Option B](#option-b-multi-line)):
 
-[](./unpopulated/inline.single.md?tag=quote)
+[](.assets/unpopulated/inline.single.md?wrap=quote&inline)
 <!-- parkdown BEGIN -->
-<blockquote>
-
-Before: [](<url>) :After
-
-</blockquote>
-
+> Before: [](<url>) :After
 <!-- parkdown END -->
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/inline.single.md?tag=code)
+[](.assets/populated/inline.single.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: [](<url>) <!-- parkdown Begin -->
@@ -85,23 +80,18 @@ Before: [](<url>) <!-- parkdown Begin -->
 
 What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
 
-[](./populated/inline.single.md?tag=quote)
+[](.assets/populated/inline.single.md?wrap=quote&inline)
 <!-- parkdown BEGIN -->
-<blockquote>
-
-Before: [](<url>) <!-- parkdown Begin -->
+> Before: [](<url>) <!-- parkdown Begin -->
 ...Included Content...
 ...Included Content... <!-- parkdown End --> :After
-
-</blockquote>
-
 <!-- parkdown END -->
 
 ##### Option B (multi line)
 
 What you write:
 
-[](./unpopulated/inline.multi.md?tag=code)
+[](.assets/unpopulated/inline.multi.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: 
@@ -112,21 +102,16 @@ Before:
 
 What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
 
-[](./unpopulated/inline.multi.md?tag=quote)
+[](.assets/unpopulated/inline.multi.md?wrap=quote&inline)
 <!-- parkdown BEGIN -->
-<blockquote>
-
-Before: 
+> Before: 
 [](<url>)
 :After
-
-</blockquote>
-
 <!-- parkdown END -->
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/inline.multi.md?tag=code)
+[](.assets/populated/inline.multi.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before: 
@@ -139,18 +124,13 @@ Before:
 
 What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
 
-[](./populated/inline.multi.md?tag=quote)
+[](.assets/populated/inline.multi.md?wrap=quote&inline)
 <!-- parkdown BEGIN -->
-<blockquote>
-
-Before: 
+> Before: 
 [](<url>) <!-- parkdown Begin (inline) -->
 ...Included Content...
 ...Included Content... <!-- parkdown End (inline) --> 
 :After
-
-</blockquote>
-
 <!-- parkdown END -->
 
 #### Block
@@ -159,7 +139,7 @@ Block inclusions occur when your "empty" link is the **only** node in a [paragra
 
 What you write:
 
-[](./unpopulated/block.md?tag=code)
+[](.assets/unpopulated/block.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before:
@@ -172,7 +152,7 @@ Before:
 
 What is rendered (**_before_** processing):
 
-[](./unpopulated/block.md?tag=quote)
+[](.assets/unpopulated/block.md?wrap=quote)
 <!-- parkdown BEGIN -->
 <blockquote>
 
@@ -188,7 +168,7 @@ Before:
 
 What your markdown file contains (**_after_** processing):
 
-[](./populated/block.md?tag=code)
+[](.assets/populated/block.md?wrap=code)
 <!-- parkdown BEGIN -->
 ```md
 Before:
@@ -205,7 +185,7 @@ Before:
 
 What is rendered (**_after_** processing):
 
-[](./populated/block.md?tag=quote)
+[](.assets/populated/block.md?wrap=quote)
 <!-- parkdown BEGIN -->
 <blockquote>
 
@@ -227,38 +207,52 @@ Before:
 
 You can pass query parameters to your inclusion links to control how they're processed.
 
+##### Processing Order
+
+[](src/include.ts?&region=extract(query))
+<!-- parkdown BEGIN -->
+```ts
+const params = new URLSearchParams(query);
+const inlineOverride = params.has("inline");
+const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+const skip = params.has("skip");
+const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
+```
+<!-- parkdown END -->
+
 ##### `skip`
 ```md
 [](...?skip)
 ```
 
-[](../src/include.ts?tag=dropdown(See-default-behavior.)&boundary=Default-Behavior)
+[](src/include.ts?wrap=dropdown(See-default-behavior.)&region=extract(Default-Behavior),replace(...))
 <!-- parkdown BEGIN -->
 
 <details>
 <summary>See default behavior.</summary>
 
 ```ts
-if (extension === "md")
-  content = recursivelyPopulateInclusions(content, headingDepth, getContent);
+if (extension === "md") {
+  ...
+  content = recursivelyPopulateInclusions(content, ...);
+}
 else if (/^(js|ts)x?|svelte$/i.test(extension))
-  content = wrap("code", content);
+  content = wrap(content, "code", ...);
 ```
 </details>
 
 <!-- parkdown END -->
 
-##### `tag`
+##### `wrap`
 ```md
-[](...?tag=code)
+[](...?wrap=code)
 ```
 
-##### `boundary`
+##### `region`
 
 ```md
 [](...?boundary=example)
 ```
-
 
 
 ### Removing populated inclusions
@@ -285,10 +279,10 @@ npx parkdown -d # defaults to processing the 'README.md' file of the current wor
 
 #### `depopulateMarkdownIncludes` export
 
-[](./code/depopulate.ts)
+[](.assets/code/depopulate.ts?region=replace(pkg,'''parkdown'''))
 <!-- parkdown BEGIN -->
 ```ts
-import { depopulateMarkdownInclusions } from "../../src";
+import { depopulateMarkdownInclusions } from  "parkdown";
 
 const file = "README.md";
 const writeFile = true;

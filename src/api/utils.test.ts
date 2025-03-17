@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
-import { parseInvocation, parseDefinition, createParser, COMMA_NOT_IN_PARENTHESIS } from "./utils";
+import { parseInvocation, parseDefinition, createParser, splitOnUnquotedComma } from "./utils";
 import { MethodDefinition } from "./types";
+import { COMMA_NOT_IN_PARENTHESIS } from "../utils";
 
 describe(parseInvocation.name, () => {
   const testCases = [
@@ -110,3 +111,22 @@ describe("split on non-parenthesized comma", () => {
   }
 
 });
+
+
+describe(splitOnUnquotedComma.name, () => {
+  test("simple", () => {
+    expect(splitOnUnquotedComma("hello,world")).toEqual(["hello", "world"]);
+  });
+
+  test("single quotes", () => {
+    expect(splitOnUnquotedComma("hello,'hello,world',hello")).toEqual(["hello", "hello,world", "hello"]);
+  });
+
+  test("preserve dual single quotes", () => {
+    expect(splitOnUnquotedComma("hello,''hello,world'',hello")).toEqual(["hello", "''hello,world''", "hello"]);
+  });
+
+  test("preserve triple double quotes", () => {
+    expect(splitOnUnquotedComma("hello,'''hello,world''',hello")).toEqual(["hello", "'''hello,world'''", "hello"]);
+  });
+})

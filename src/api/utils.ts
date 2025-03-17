@@ -35,8 +35,7 @@ const restIsUndefined = <T>(arr: T[], index: number) => {
   return true;
 }
 
-
-const splitOnUnquotedComma = (input: string): (string | undefined)[] => {
+export const splitOnUnquotedComma = (input: string): (string | undefined)[] => {
   const result: (string | undefined)[] = [];
 
   let current = "";
@@ -44,24 +43,34 @@ const splitOnUnquotedComma = (input: string): (string | undefined)[] => {
 
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
+    const isSingleQuote = ch === "'";
 
-    if (ch === "'")
+    if (isSingleQuote && input.at(i + 1) === "'") {
+      const triple = input.at(i + 2) === "'";
       inSingleQuotes = !inSingleQuotes;
-    else if (ch === "," && !inSingleQuotes) {
-      result.push(stripSurroundingSingleQuotes(current.trim()));
+      current += triple ? "'''" : "''";
+      i += triple ? 2 : 1;
+    } else if (isSingleQuote) {
+      inSingleQuotes = !inSingleQuotes;
+      current += ch;
+    } else if (ch === "," && !inSingleQuotes) {
+      result.push(current.trim());
       current = "";
     } else current += ch;
   }
 
-  result.push(stripSurroundingSingleQuotes(current.trim()));
+  result.push(current.trim());
 
   return result
-    .map(item => item === "" ? undefined : item)
+    .map(item => item === "" ? undefined : item ? stripSurroundingSingleQuotes(item) : undefined)
     .filter((item, index, arr) => item !== undefined || !restIsUndefined(arr, index));
 }
 
-const stripSurroundingSingleQuotes = (input: string): string =>
-  input.length >= 2 && input[0] === "'" && input[input.length - 1] === "'" ? input.slice(1, -1) : input;
+const stripSurroundingSingleQuotes = (input: string): string => {
+  const isWrapped = input.length >= 2 && input[0] === "'" && input.at(-1) === "'";
+  const isDoubleWrapped = isWrapped && (input.length >= 4 && input[1] === "'" && input.at(-2) === "'");
+  return !isWrapped || isDoubleWrapped ? input : input.slice(1, -1);
+};
 
 type ParsedParameterDefinition = { name: string; optional: boolean; type: keyof TypeRecord };
 type ParsedMethodDefinition = { name: string; parameters?: ParsedParameterDefinition[] };
@@ -150,5 +159,3 @@ export const createParser: CreateParser = <T extends MethodDefinitions>(definiti
     }, { name } as ParsingCandidates<T>);
   }
 }
-
-export const COMMA_NOT_IN_PARENTHESIS = /,\s*(?![^()]*\))/;

@@ -107,10 +107,14 @@ export const removeQueryParams = (path: string) => seperateQueryParams(path)[0];
 
 
 export class Intervals {
-  private intervals: Array<readonly [number, number]> = [];
+  private intervals: Array<[number, number]> = [];
 
   push(start: number, end: number) {
     this.intervals.push([Math.min(start, end), Math.max(start, end)]);
+  }
+
+  combine(rhs: Intervals) {
+    this.intervals.push(...rhs.intervals);
   }
 
   collapse() {
@@ -162,3 +166,5 @@ export class Intervals {
     return (this.intervals = result);
   }
 }
+
+export const COMMA_NOT_IN_PARENTHESIS = /,\s*(?![^()]*\))/;
