@@ -4,11 +4,12 @@ import * as regexp from '@flex-development/import-regex';
 describe("remapImports", () => {
   test("should remap imports", () => {
     const code = dedent`
-    import { foo } from "bar";
-    import { baz, type Qux } from "qux";
-    import type { Foo as Bar } from "bar";
+      import { foo } from "bar";
+      import { baz, type Qux } from "qux";
+      import type { Foo as Bar } from "bar";
 
-    const result = code.replace(regexp.STATIC_IMPORT_REGEX, (match, importPath) => {
+      const result = () => {
+      }
     `;
 
     let value = code;

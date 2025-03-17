@@ -17,10 +17,10 @@ export const remapImports = (markdown: string, { raw, paramaterized }: FromTo) =
   const ast = parse.md(markdown);
   const code = getAllPositionNodes(ast, "code").sort(nodeSort);
 
-  const remapSpecifier = (specifier: string) => {
+  const tryRemapSpecifier = (specifier: string) => {
     if (paramaterized?.$local && isLocalSpecifier(specifier)) return paramaterized.$local;
     if (raw?.[specifier]) return raw[specifier];
-    return undefined;
+    return null;
   }
 
   for (const node of code.reverse()) {
@@ -30,10 +30,10 @@ export const remapImports = (markdown: string, { raw, paramaterized }: FromTo) =
       case "js":
       case "tsx":
       case "jsx":
-        value = remapJsTsImports(value, remapSpecifier);
+        value = remapJsTsImports(value, tryRemapSpecifier);
         break;
       case "svelte":
-        value = remapSvelteImports(value, remapSpecifier);
+        value = remapSvelteImports(value, tryRemapSpecifier);
         break;
     }
 
@@ -43,9 +43,9 @@ export const remapImports = (markdown: string, { raw, paramaterized }: FromTo) =
   return markdown;
 }
 
-type RemapSpecifier = (specifier: string) => string | undefined;
+type TryRemapSpecifier = (specifier: string) => string | null;
 
-const remapJsTsImports = (code: string, remapSpecifier: RemapSpecifier) =>
+export const remapJsTsImports = (code: string, remapSpecifier: TryRemapSpecifier) =>
   [...code.matchAll(regexp.STATIC_IMPORT_REGEX)]
     .sort((a, b) => a.index - b.index)
     .reverse()
@@ -67,6 +67,6 @@ const scripTagRegex = () =>
   // g              - Global flag to match all occurrences
   /<script[^>]*>([\s\S]*?)<\/script>/g;
 
-const remapSvelteImports = (code: string, remapSpecifier: RemapSpecifier) =>
+export const remapSvelteImports = (code: string, remapSpecifier: TryRemapSpecifier) =>
   code.replace(scripTagRegex(), (scriptTag, scriptContent) =>
     scriptTag.replace(scriptContent, remapJsTsImports(scriptContent, remapSpecifier)));

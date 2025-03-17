@@ -1,13 +1,14 @@
 import { describe, expect, test } from "vitest";
+import { dedent } from "ts-dedent";
 import { extractContent, getAllPositionNodes, nodeSort, parse } from "./utils";
-import { PsuedoFilesystem, lorem, md } from "./utils.test";
+import { PsuedoFilesystem, lorem } from "./utils.test";
 import { join } from "node:path";
 import {
   getReplacementTargets,
   isSpecialLink,
   applyHeadingDepth,
   extendGetRelativePathContent,
-  recursivelyApplyInclusions,
+  recursivelyPopulateInclusions,
   nodeDepthFinder,
   specialComment,
   specialLinkText,
@@ -198,23 +199,24 @@ ${specialLinkText({ url: "./not-populated" })}
 
 describe(getTopLevelCommentBlocks.name, () => {
   test("problematic case", () => {
-    const { ast } = md(`
-# Main heading
+    const content = dedent`
+      # Main heading
 
-[](./child/README.md)
-<!-- parkdown BEGIN -->
-## Child heading
+      [](./child/README.md)
+      <!-- parkdown BEGIN -->
+      ## Child heading
 
-[](./grandchild/README.md)
-<!-- parkdown BEGIN -->
-### Grandchild heading
+      [](./grandchild/README.md)
+      <!-- parkdown BEGIN -->
+      ### Grandchild heading
 
-Hello!
-<!-- parkdown END -->
-<!-- parkdown END -->
+      Hello!
+      <!-- parkdown END -->
+      <!-- parkdown END -->
 
-End
-      `);
+      End
+    `;
+    const ast = parse.md(content);
     const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
     const closingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("end"));
     expect(openingComments.length).toBe(2);
@@ -247,76 +249,76 @@ describe(extendGetRelativePathContent.name, () => {
   });
 });
 
-describe(recursivelyApplyInclusions.name, () => {
+describe(recursivelyPopulateInclusions.name, () => {
   test("basic unpopulated", () => {
     const filesystem = new PsuedoFilesystem({
-      "README.md": md.text(`
-# Main heading
+      "README.md": dedent`
+        # Main heading
 
-[](./child/README.md)
+        [](./child/README.md)
 
-End parent
-      `),
+        End parent
+      `,
       child: {
-        "README.md": md.text(`
-# Child heading
+        "README.md": dedent`
+          # Child heading
 
-End child
-        `),
+          End child
+        `,
       }
     });
 
     const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
 
-    const result = recursivelyApplyInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
-    expect(result).toBe(md.text(`
-# Main heading
+    const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    expect(result).toBe(dedent`
+      # Main heading
 
-[](./child/README.md)
-${specialComment.begin}
-## Child heading
+      [](./child/README.md)
+      ${specialComment.begin}
+      ## Child heading
 
-End child
-${specialComment.end}
+      End child
+      ${specialComment.end}
 
-End parent
-      `))
-    expect(result).toBe(recursivelyApplyInclusions(result, 0, fromRoot));
+      End parent
+    `)
+    expect(result).toBe(recursivelyPopulateInclusions(result, 0, fromRoot));
   });
 
   test('should apply modifications to all top-level links in a markdown file', () => {
 
     const filesystem = new PsuedoFilesystem({
-      "README.md": md.text(`
-# Main heading
+      "README.md": dedent`
+        # Main heading
 
-[](./child/README.md)
+        [](./child/README.md)
 
-End
-      `),
+        End
+      `,
       child: {
-        "README.md": md.text(`
-# Child heading
+        "README.md": dedent`
+          # Child heading
 
-[](./grandchild/README.md)
-${specialComment.begin}
-THIS SHOULD BE DELETED 
-${specialComment.end}
-        `),
+          [](./grandchild/README.md)
+          ${specialComment.begin}
+          THIS SHOULD BE DELETED 
+          ${specialComment.end}
+        `,
         grandchild: {
-          "README.md": md.text(`
-# Grandchild heading
+          "README.md": dedent`
+            # Grandchild heading
 
-Hello!
-          `),
+            Hello!
+          `,
         }
       }
     });
 
     const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
 
-    const result = recursivelyApplyInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
-    expect(result).toBe(recursivelyApplyInclusions(result, 0, fromRoot));
+    const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    expect(result).toBe(recursivelyPopulateInclusions(result, 0, fromRoot));
   });
 });
 

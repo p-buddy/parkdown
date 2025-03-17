@@ -1,7 +1,9 @@
 import { URL, URLSearchParams } from "node:url";
-import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween } from "./utils";
-import type { AstRoot, MarkdownNode, Link, PositionNode, HasPosition } from "./utils"
+import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween, trimWhitespaceOnly } from "./utils";
+import { type AstRoot, type Link, type PositionNode, type HasPosition, Intervals } from "./utils"
 import { dirname, join } from "node:path";
+import extract from "extract-comments";
+import { wrap, COMMA_NOT_IN_PARENTHESIS } from "./wrap";
 
 const specialLinkTargets = ["http", "./", "../"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
@@ -163,62 +165,106 @@ export const applyHeadingDepth = (markdown: string, headingDepth: number, ast?: 
   return lines.join("\n");
 }
 
-const applyTag = (tag: string, content: string, extension: string) => {
-  switch (tag) {
-    case "code":
-      return `\`\`\`${extension}\n${content}\n\`\`\``;
-    case "quote":
-      return `<blockquote>\n\n${content}\n\n</blockquote>\n`;
-    default:
-      throw new Error(`Unsupported tag: ${tag}`);
+export const extractContentWithinBoundaries = (markdown: string, ...queries: string[]) => {
+  type ExtractedComment = {
+    type: 'BlockComment' | 'LineComment',
+    value: string,
+    range: [number, number],
+    loc: {
+      start: { line: number, column: number },
+      end: { line: number, column: number },
+    },
+    raw: string,
+  };
+
+  const lines = markdown.split("\n");
+  const content = (range: [number, number]) => markdown.slice(range[0], range[1]);
+  const isFullLine = ({ loc, range }: ExtractedComment) => content(range) === lines[loc.end.line - 1];
+
+  const comments = ((extract as any)(markdown) as ExtractedComment[]);
+
+  const extraction = new Intervals();
+  const markers = new Intervals();
+
+  for (const query of queries) {
+    const matching = comments
+      .filter((c) => c.value.includes(query))
+      .sort((a, b) => a.range[0] - b.range[0]);
+
+    for (let i = 0; i < matching.length - 1; i += 2) {
+      const open = matching[i];
+      const close = matching[i + 1];
+      extraction.push(
+        isFullLine(open) ? open.range[1] + 1 : open.range[1],
+        isFullLine(close) ? close.range[0] - 1 : close.range[0]);
+      markers.push(open.range[0], open.range[1]);
+      markers.push(close.range[0], close.range[1]);
+    }
   }
-}
 
-const defaultCodeFileExtensions = ["ts", "js", "jsx", "tsx", "svelte"];
+  extraction.collapse();
+  markers.collapse();
 
-export const recursivelyApplyInclusions = (
+  return extraction.subtract(markers)
+    .map(([start, end]) => trimWhitespaceOnly(markdown.substring(start, end)))
+    .filter(Boolean)
+    .join("")
+    .trim();
+};
+
+export const removePopulatedInclusions = (markdown: string) =>
+  getReplacementTargets(markdown)
+    .reverse()
+    .sort(nodeSort.reverse)
+    .reduce((md, target) => replaceWithContent(md, specialLinkText(target), target), markdown);
+
+export const recursivelyPopulateInclusions = (
   markdown: string,
   headingDepth: number,
   getRelativePathContent: GetRelativePathContent,
 ) => {
-  markdown = getReplacementTargets(markdown)
-    .reverse()
-    .sort(nodeSort.reverse)
-    .reduce((md, target) => replaceWithContent(md, specialLinkText(target), target), markdown);
+  markdown = removePopulatedInclusions(markdown);
   markdown = applyHeadingDepth(markdown, headingDepth);
-
   const ast = parse.md(markdown);
-  const targets = getReplacementTargets(markdown, ast);
 
-  for (let i = targets.length - 1; i >= 0; i--) {
-    const current = targets[i]
-    const { url, headingDepth } = current;
-    if (url.startsWith("./") || url.startsWith("../")) {
-      let content = getRelativePathContent(url);
-      const [extension, query] = url.split(".").pop()?.split("?") ?? [];
-      const params = new URLSearchParams(query ?? "");
+  return getReplacementTargets(markdown, ast)
+    .sort(nodeSort)
+    .reverse()
+    .map(target => {
+      const { url, headingDepth, inline } = target;
+      if (url.startsWith("./") || url.startsWith("../")) {
+        let content = getRelativePathContent(url);
+        const [extension, query] = url.split(".").pop()?.split("?") ?? [];
+        const params = new URLSearchParams(query ?? "");
+        const skip = params.has("skip");
+        const tags = params.get("tag")?.split(COMMA_NOT_IN_PARENTHESIS) ?? [];
+        const boundary = params.get("boundary")?.split(",");
 
-      const skip = params.has("skip"); // skip the default behavior of included file
-      const tags = params.get("tag")?.split(",") ?? [];
-      const lines = params.get("lines");
+        if (boundary)
+          content = extractContentWithinBoundaries(content, ...boundary);
 
-      if (!skip)
-        if (extension === "md")
-          content = recursivelyApplyInclusions(
-            content,
-            headingDepth,
-            extendGetRelativePathContent(getRelativePathContent, current)
-          );
-        else if (defaultCodeFileExtensions.includes(extension))
-          tags.unshift("code");
+        const wrapDetails = { extension, inline };
 
-      content = tags.reduce((content, tag) => applyTag(tag, content, extension), content);
-      markdown = replaceWithContent(markdown, getReplacementContent(current, content), current);
-    }
-    else if (url.startsWith("http"))
-      throw new Error("External web links are not implemented yet");
-    else
-      throw new Error(`Unsupported link type: ${url}`);
-  }
-  return markdown;
+        if (!skip)
+          /** parkdown: Default Behavior */
+          if (extension === "md")
+            content = recursivelyPopulateInclusions(
+              content,
+              headingDepth,
+              extendGetRelativePathContent(getRelativePathContent, target)
+            );
+          else if (/^(js|ts)x?|svelte$/i.test(extension))
+            content = wrap("code", content, wrapDetails);
+        /** parkdown: Default Behavior */
+
+        content = tags.reduce((content, tag) => wrap(tag, content, wrapDetails), content);
+
+        return { target, content: getReplacementContent(target, content) };
+      }
+      else if (url.startsWith("http"))
+        throw new Error("External web links are not implemented yet");
+      else
+        throw new Error(`Unsupported link type: ${url}`);
+    })
+    .reduce((acc, { target, content }) => replaceWithContent(acc, content, target), markdown);
 }

@@ -1,4 +1,4 @@
-# Inclusion
+# Inclusions
 
 You can _include_ other files' content within your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` corresponds to either:
   - a local file, e.g. `[](./other.md)` or `[](../root.md)`
@@ -8,20 +8,20 @@ Markdown renderers shouldn't display these links, but [parkdown]() can process a
 
 ## Invocation
 
-Invoke [parkdown's]() _inclusion_ in your markdown files with either the [cli](#cli) or via the `processMarkdownIncludes` [export](#`processMarkdownIncludes`-export):
+Invoke [parkdown's]() _inclusion_ functionality in your markdown files with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#`processMarkdownIncludes`-export):
 
-### CLI
+### CLI (inclusions)
 
 The following commands are all equivalent:
 ```bash
-npx parkdown --file ./README.md --includes
-npx parkdown -f README.md -i
+npx parkdown --file ./README.md
+npx parkdown -f README.md
 npx parkdown # defaults to processing inclusions in the 'README.md' file of the current working directory
 ```
 
-### `processMarkdownIncludes` export
+### `populateMarkdownIncludes` export
 
-[](./processIncludes.example.ts)
+[](./code/inclusions.ts)
 
 ## Authoring
 
@@ -90,3 +90,51 @@ What your markdown file contains (**_after_** processing):
 What is rendered (**_after_** processing):
 
 [](./populated/block.md?tag=quote)
+
+### Query parameters
+
+You can pass query parameters to your inclusion links to control how they're processed.
+
+#### `skip`
+```md
+[](...?skip)
+```
+
+#### `tag`
+```md
+[](...?tag=code)
+```
+
+#### `boundary`
+
+```md
+[](...?boundary=example)
+```
+
+
+
+## Removing populated inclusions
+
+Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#`removePopulatedInclusions`-export):
+
+### CLI (removing populated inclusions)
+
+The following commands are all equivalent:
+
+```bash
+npx parkdown --file ./README.md --depopulate --no-inclusions
+npx parkdown -f README.md -d --ni # Notice the double-dash (--) on 'ni'
+npx parkdown -d --ni # defaults to processing the 'README.md' file of the current working directory
+```
+
+The following commands will lead to the same result, but since `--no-inclusions` (`--ni`) is not specified, there will be some wasted work as inclusions will be processed and then removed.
+
+```bash
+npx parkdown --file ./README.md --depopulate
+npx parkdown -f README.md -d
+npx parkdown -d # defaults to processing the 'README.md' file of the current working directory
+```
+
+### `depopulateMarkdownIncludes` export
+
+[](./code/depopulate.ts)

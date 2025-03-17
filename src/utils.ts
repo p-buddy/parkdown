@@ -104,3 +104,74 @@ export const seperateQueryParams = (path: string): [lhs: string, query: string] 
 export const getQueryParams = (path: string) => seperateQueryParams(path)[1];
 
 export const removeQueryParams = (path: string) => seperateQueryParams(path)[0];
+
+
+export class Intervals {
+  private intervals: Array<readonly [number, number]> = [];
+
+  push(start: number, end: number) {
+    this.intervals.push([Math.min(start, end), Math.max(start, end)]);
+  }
+
+  collapse() {
+    const { intervals } = this;
+    if (!intervals.length) return (this.intervals = []);
+
+    intervals.sort((a, b) => a[0] - b[0]);
+
+    const result: typeof this.intervals = [];
+    let [currStart, currEnd] = intervals[0];
+
+    for (let i = 1; i < intervals.length; i++) {
+      const [start, end] = intervals[i];
+      if (start <= currEnd) currEnd = Math.max(currEnd, end);
+      else {
+        result.push([currStart, currEnd]);
+        currStart = start;
+        currEnd = end;
+      }
+    }
+    result.push([currStart, currEnd]);
+
+    return (this.intervals = result);
+  }
+
+  subtract(rhs: Intervals) {
+    const { intervals } = this;
+    const { intervals: remove } = rhs;
+
+    if (!intervals.length || !remove.length) return intervals;
+
+    let result = [...intervals];
+    for (const [removeStart, removeEnd] of remove) {
+      const updated: typeof this.intervals = [];
+
+      for (const [start, end] of result) {
+        if (removeEnd <= start || removeStart >= end) {
+          updated.push([start, end]);
+          continue;
+        }
+
+        if (removeStart > start) updated.push([start, removeStart]);
+        if (removeEnd < end) updated.push([removeEnd, end]);
+      }
+
+      result = updated;
+    }
+
+    return (this.intervals = result);
+  }
+}
+
+export const trimWhitespaceOnly = (content: string) =>
+  // This regex trims whitespace (but not line breaks) from the start and end of a string:
+  // ^ - Anchors to the start of the string
+  // [^\S\r\n]+ - Matches one or more characters that are:
+  //   ^ - Not in the set
+  //   \S - Non-whitespace characters (inverted, so this matches whitespace)
+  //   \r\n - Carriage return or newline (excluded from matching)
+  // | - OR operator
+  // [^\S\r\n]+ - Same pattern as above, but for the end of the string
+  // $ - Anchors to the end of the string
+  // 'g' flag - Global match (find all occurrences)
+  content.replace(/^[^\S\r\n]+|[^\S\r\n]+$/g, '');

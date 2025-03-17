@@ -100,37 +100,6 @@ hello
   })
 });
 
-type RepeatString<Char extends string, Count extends number, Result extends string = '', Counter extends any[] = []> =
-  Counter['length'] extends Count
-  ? Result
-  : RepeatString<Char, Count, `${Result}${Char}`, [...Counter, any]>;
-
-type ZeroTo10 = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-
-type UptoTenSpaces = { [i in ZeroTo10]: RepeatString<' ', i> }[ZeroTo10]
-
-/**
- * @example 
- * ```ts
- * const { text, ast } = md(`
- * # Title
- * 
- * [link](http://example.com)
- * hello
- * <!-- comment -->
- * `)
- * ```
- * @param value 
- * @returns 
- */
-export const md = (value: `\n${string}\n${UptoTenSpaces}`) => {
-  const text = value.split("\n").slice(1, -1).join("\n");
-  return { text, ast: parse.md(text) }
-}
-
-
-md.text = (value: Parameters<typeof md>[0]) => md(value).text;
-
 interface PsuedoDir {
   [key: string]: PsuedoDir | string;
 }
