@@ -162,16 +162,3 @@ export class Intervals {
     return (this.intervals = result);
   }
 }
-
-export const trimWhitespaceOnly = (content: string) =>
-  // This regex trims whitespace (but not line breaks) from the start and end of a string:
-  // ^ - Anchors to the start of the string
-  // [^\S\r\n]+ - Matches one or more characters that are:
-  //   ^ - Not in the set
-  //   \S - Non-whitespace characters (inverted, so this matches whitespace)
-  //   \r\n - Carriage return or newline (excluded from matching)
-  // | - OR operator
-  // [^\S\r\n]+ - Same pattern as above, but for the end of the string
-  // $ - Anchors to the end of the string
-  // 'g' flag - Global match (find all occurrences)
-  content.replace(/^[^\S\r\n]+|[^\S\r\n]+$/g, '');

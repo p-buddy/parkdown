@@ -100,6 +100,8 @@ You can pass query parameters to your inclusion links to control how they're pro
 [](...?skip)
 ```
 
+[](../src/include.ts?tag=dropdown(See-default-behavior.)&boundary=Default-Behavior)
+
 #### `tag`
 ```md
 [](...?tag=code)

@@ -99,104 +99,6 @@ describe('applyHeadingDepth', () => {
   });
 });
 
-/** 
-describe(matchOpeningCommentsToLinks.name, () => {
-  test("happy path", () => {
-    const { text, ast } = md(`
-${specialLinkText({ url: "./disconnected" })}
-
-${specialLinkText({ url: "./inline" })} ${specialComment.begin}
-
-${specialLinkText({ url: "./multiline" })} 
-${specialComment.begin}
-
-${specialLinkText({ url: "./mixed-disconnected" })} ${specialLinkText({ url: "./mixed-multiline" })} 
-${specialComment.begin}
-    `)
-
-    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
-    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
-
-    const matches = matchOpeningCommentsToLinks(text, specialLinks, openingComments);
-    expect(matches).toEqual([
-      specialLinks[0],
-      [specialLinks[1], openingComments[0]],
-      [specialLinks[2], openingComments[1]],
-      specialLinks[3],
-      [specialLinks[4], openingComments[2]],
-    ])
-  })
-
-  test("non-whitespace content between link and opening comment", () => {
-    const { text, ast } = md(`
-${specialLinkText({ url: "./inline" })} hh ${specialComment.begin}
-    `)
-
-    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
-    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
-
-    expect(() => matchOpeningCommentsToLinks(text, specialLinks, openingComments)).toThrow();
-  })
-
-  test("unmatched opening comment", () => {
-    const { text, ast } = md(`
-hh ${specialComment.begin}
-    `)
-
-    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
-    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
-
-    expect(() => matchOpeningCommentsToLinks(text, specialLinks, openingComments)).toThrow();
-  })
-})
-*/
-
-/**
-describe(matchCommentBlocks.name, () => {
-  test("happy path", () => {
-    const { text, ast } = md(`
-${specialLinkText({ url: "./inline" })} ${specialComment.begin}
-${specialComment.end}
-
-${specialLinkText({ url: "./multiline" })} ${specialComment.begin}
-HELLO WORLD
-${specialComment.end}
-
-${specialLinkText({ url: "./not-populated" })}
-
-${specialLinkText({ url: "./nested" })} ${specialComment.begin}
-
-${specialLinkText({ url: "./child" })}
-${specialComment.begin}
-${specialLinkText({ url: "./grandchild" })} ${specialComment.begin}
-${specialComment.end}
-${specialComment.end}
-${specialComment.end}
-
-${specialLinkText({ url: "./single-line" })} ${specialComment.begin} ${specialComment.end}
-
-${specialLinkText({ url: "./not-populated" })}
-    `)
-
-    const specialLinks = getAllPositionNodes(ast, "link").filter(isSpecialLink);
-    const openingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("begin"));
-    const closingComments = getAllPositionNodes(ast, "html").filter(isSpecialComment("end"));
-
-    const matches = matchOpeningCommentsToLinks(text, specialLinks, openingComments);
-    const blocks = matchCommentBlocks(matches, closingComments);
-
-    expect(blocks).toEqual([
-      [specialLinks[0], openingComments[0], closingComments[0]],
-      [specialLinks[1], openingComments[1], closingComments[1]],
-      specialLinks[2],
-      [specialLinks[3], openingComments[2], closingComments[4]],
-      [specialLinks[6], openingComments[5], closingComments[5]],
-      specialLinks[7],
-    ])
-  })
-})
-*/
-
 describe(getTopLevelCommentBlocks.name, () => {
   test("problematic case", () => {
     const content = dedent`
@@ -371,6 +273,76 @@ describe(recursivelyPopulateInclusions.name, () => {
     const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
     expect(result).toBe(recursivelyPopulateInclusions(result, 0, fromRoot));
   });
+
+  test('with code boundary', () => {
+    const filesystem = new PsuedoFilesystem({
+      "README.md": dedent`
+        # Main heading
+
+        [](./child/file.ts?boundary=boundary)
+
+        End
+      `,
+      child: {
+        "file.ts": dedent`
+          if (true) {
+            /* boundary */
+            const x = 5;
+            /* boundary */
+          }
+        `,
+      }
+    });
+
+    const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
+
+    const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    expect(result).toBe(dedent`
+      # Main heading
+
+      [](./child/file.ts?boundary=boundary)
+      ${specialComment.begin}
+      \`\`\`ts
+      const x = 5;
+      \`\`\`
+      ${specialComment.end}
+      
+      End`
+    )
+  })
+
+  test('with wrapped in dropdown', () => {
+    const filesystem = new PsuedoFilesystem({
+      "README.md": dedent`
+        # Main heading
+
+        [](./child/README.md?tag=dropdown('Open-me,-please!'))
+      `,
+      child: {
+        "README.md": dedent`
+          Hello!
+        `,
+      }
+    });
+
+    const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
+
+    const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    expect(result).toBe(dedent`
+      # Main heading
+
+      [](./child/README.md?tag=dropdown('Open-me,-please!'))
+      ${specialComment.begin}
+
+      <details>
+      <summary>Open me, please!</summary>
+      
+      Hello!
+      </details>
+      
+      ${specialComment.end}`
+    );
+  })
 });
 
 describe(getReplacementTargets.name, () => {

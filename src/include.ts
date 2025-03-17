@@ -1,9 +1,10 @@
 import { URL, URLSearchParams } from "node:url";
-import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween, trimWhitespaceOnly } from "./utils";
+import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, Html, nodeSort, replaceWithContent, getContentInBetween } from "./utils";
 import { type AstRoot, type Link, type PositionNode, type HasPosition, Intervals } from "./utils"
-import { dirname, join } from "node:path";
+import { dirname, join, basename } from "node:path";
 import extract from "extract-comments";
-import { wrap, COMMA_NOT_IN_PARENTHESIS } from "./wrap";
+import { wrap as wrapInElement, COMMA_NOT_IN_PARENTHESIS } from "./wrap";
+import { dedent } from "ts-dedent";
 
 const specialLinkTargets = ["http", "./", "../"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
@@ -166,6 +167,7 @@ export const applyHeadingDepth = (markdown: string, headingDepth: number, ast?: 
 }
 
 export const extractContentWithinBoundaries = (markdown: string, ...queries: string[]) => {
+  if (queries.length === 0) return markdown;
   type ExtractedComment = {
     type: 'BlockComment' | 'LineComment',
     value: string,
@@ -188,7 +190,7 @@ export const extractContentWithinBoundaries = (markdown: string, ...queries: str
 
   for (const query of queries) {
     const matching = comments
-      .filter((c) => c.value.includes(query))
+      .filter(({ value }) => value.includes(query))
       .sort((a, b) => a.range[0] - b.range[0]);
 
     for (let i = 0; i < matching.length - 1; i += 2) {
@@ -205,11 +207,12 @@ export const extractContentWithinBoundaries = (markdown: string, ...queries: str
   extraction.collapse();
   markers.collapse();
 
-  return extraction.subtract(markers)
-    .map(([start, end]) => trimWhitespaceOnly(markdown.substring(start, end)))
-    .filter(Boolean)
-    .join("")
-    .trim();
+  return dedent(
+    extraction.subtract(markers)
+      .map(([start, end]) => markdown.substring(start, end))
+      .filter(Boolean)
+      .join("")
+  ).trim();
 };
 
 export const removePopulatedInclusions = (markdown: string) =>
@@ -232,10 +235,15 @@ export const recursivelyPopulateInclusions = (
     .reverse()
     .map(target => {
       const { url, headingDepth, inline } = target;
+      const [base, ...splitOnMark] = basename(url).split("?");
+      const extension = base.split(".").pop() ?? "";
+      const query = splitOnMark.join("?");
+      const path = join(dirname(url), base);
+
       if (url.startsWith("./") || url.startsWith("../")) {
-        let content = getRelativePathContent(url);
-        const [extension, query] = url.split(".").pop()?.split("?") ?? [];
-        const params = new URLSearchParams(query ?? "");
+        let content = getRelativePathContent(path);
+
+        const params = new URLSearchParams(query);
         const skip = params.has("skip");
         const tags = params.get("tag")?.split(COMMA_NOT_IN_PARENTHESIS) ?? [];
         const boundary = params.get("boundary")?.split(",");
@@ -244,20 +252,18 @@ export const recursivelyPopulateInclusions = (
           content = extractContentWithinBoundaries(content, ...boundary);
 
         const wrapDetails = { extension, inline };
+        const wrap = (tag: string, text: string) => wrapInElement(tag, text, wrapDetails);
+        const getContent = extendGetRelativePathContent(getRelativePathContent, target);
 
         if (!skip)
-          /** parkdown: Default Behavior */
+          /** parkdown: Default-Behavior */
           if (extension === "md")
-            content = recursivelyPopulateInclusions(
-              content,
-              headingDepth,
-              extendGetRelativePathContent(getRelativePathContent, target)
-            );
+            content = recursivelyPopulateInclusions(content, headingDepth, getContent);
           else if (/^(js|ts)x?|svelte$/i.test(extension))
-            content = wrap("code", content, wrapDetails);
-        /** parkdown: Default Behavior */
+            content = wrap("code", content);
+        /** parkdown: Default-Behavior */
 
-        content = tags.reduce((content, tag) => wrap(tag, content, wrapDetails), content);
+        content = tags.reduce((content, tag) => wrap(tag, content), content);
 
         return { target, content: getReplacementContent(target, content) };
       }

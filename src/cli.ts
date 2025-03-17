@@ -12,19 +12,20 @@ const program = new Command()
   .option('-r, --remap-imports', 'Remap import specifiers in code blocks from one destination to another')
   .parse();
 
-const { inclusions, depopulate, file, write } = program.opts();
+const { inclusions: noInclusions, depopulate, file, write: noWrite } = program.opts();
+
 
 if (file.length === 0) file.push("README.md");
 
 /** parkdown: process-order */
 const processors = [
-  [populateMarkdownInclusions, inclusions],
+  [populateMarkdownInclusions, !noInclusions],
   [depopulateMarkdownInclusions, depopulate],
 ] as const;
 /** parkdown: process-order */
 
 for (const [processor] of processors.filter(([_, condition]) => condition))
   for (const _file of file) {
-    const result = processor(_file, write);
-    if (!write) console.log(result);
+    const result = processor(_file, !noWrite);
+    if (noWrite) console.log(result);
   }
