@@ -48,6 +48,7 @@ describe("extractBoundary", () => {
     `;
     expect(extractContentWithinBoundaries(code, "id-1"))
       .toEqual("This content should be extracted\n/* id-2 */\nThis content should also be extracted\n/* id-2 */");
+    // NOTE: Nested full-line comments create extra newlines
     expect(extractContentWithinBoundaries(code, "id-1", "id-2"))
       .toEqual("This content should be extracted\n\nThis content should also be extracted");
     expect(extractContentWithinBoundaries(code, "id-2"))
