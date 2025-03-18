@@ -15,7 +15,9 @@ These APIs are utilized when setting the query parameter with a _function-like_ 
 [](<url>?example=method(hello-world,true))
 ```
 
-As you can maybe tell from the example above, we're relaxing some constraints on typical function invocation (like the need to wrap string arguments in quotes), while also imposing some additional constraints (like not using spaces) to ensure the links are valid markdown and the URLs are [safe](https://support.exactonline.com/community/s/knowledge-base?language=en_GB#All-All-DNO-Content-urlcharacters).
+As you can maybe tell from the example above, we're relaxing some constraints on typical function invocations (like the need to wrap string arguments in quotes), while also imposing some additional constraints (like not using spaces) to ensure the links are valid markdown and the URLs are [safe](https://support.exactonline.com/community/s/knowledge-base?language=en_GB#All-All-DNO-Content-urlcharacters).
+
+The goal is to make it as painless as possible to author links that are valid markdown, valid URLs, and easy to read and write.
 
 Please note the following:
 

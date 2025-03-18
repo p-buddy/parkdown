@@ -1,1 +1,1 @@
-Before: [](<url>) :After
+Before... [](<url>) ...After

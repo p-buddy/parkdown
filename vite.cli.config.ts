@@ -6,11 +6,12 @@ import { name as packageName } from './package.json';
 export default defineConfig({
   resolve: {
     alias: {
+      '.': packageName,
       './': packageName,
       './index': packageName,
     },
   },
-  plugins: [externalizeDeps({ nodeBuiltins: false, devDeps: true, include: [packageName] })],
+  plugins: [externalizeDeps({ nodeBuiltins: true, include: [packageName] })],
   build: {
     lib: {
       fileName: 'cli',

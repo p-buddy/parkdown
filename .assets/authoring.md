@@ -1,16 +1,16 @@
 # Authoring
 
-You can author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
+You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
 
-How you author these "empty" links affects how they end up being rendered, either [inline](#inline) or as a [block](#block).
+These links can be rendered either [inline](#inline) or [block](#block), depending on how you author them.
 
 ## Inline
 
-Inline inclusions occur when your "empty" link has siblings (meaning it's **not** the only node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1)).
+Inline inclusions occur when your _text-less_ link has 1 or more siblings (meaning it's **not** the only node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1)).
 
-There are two equivalent ways to author inline inclusions, and which you choose depends on how you want your raw markdown to look.
+There are two equivalent ways to author inline inclusions, [single-line](#single-line) or [multi-line](#multi-line), and which you choose depends solely on how you want your raw markdown to look (it will **not** affect the rendered output).
 
-### Option A (single line)
+### Single-line
 
 What you write:
 
@@ -28,7 +28,7 @@ What is rendered (**_after_** processing, same as [Option B](#option-b-multi-lin
 
 [](./populated/inline.single.md?wrap=quote&inline)
 
-### Option B (multi line)
+### Multi-line
 
 What you write:
 

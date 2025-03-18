@@ -1,8 +1,8 @@
 # Invocation
 
-Invoke [parkdown's]() _inclusion_ functionality in your markdown files with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#`processMarkdownIncludes`-export):
+Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#populateMarkdownIncludes-export):
 
-## CLI (inclusions)
+## CLI
 
 The following commands are all equivalent:
 ```bash

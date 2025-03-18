@@ -201,6 +201,15 @@ export const recursivelyPopulateInclusions = (
         /** p▼: query */
 
         /** p▼: query */
+        const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+        /** p▼: query */
+        content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
+
+        /** p▼: query */
+        const skip = params.has("skip");
+        /** p▼: query */
+
+        /** p▼: query */
         const headingModfiier = params.get("heading") ?? 0;
         /** p▼: query */
 
@@ -211,14 +220,6 @@ export const recursivelyPopulateInclusions = (
         let { inline } = target;
         if (inlineOverride) inline = true;
 
-        /** p▼: query */
-        const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
-        /** p▼: query */
-        content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
-
-        /** p▼: query */
-        const skip = params.has("skip");
-        /** p▼: query */
         if (!skip)
           /** p▼: Default-Behavior */
           if (extension === "md") {

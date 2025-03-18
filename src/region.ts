@@ -23,7 +23,7 @@ type ExtractedComment = {
   raw: string,
 };
 
-const extractComments = (content: string) => _extractComments(content) as ExtractedComment[];
+const extractComments = (content: string) => (_extractComments as any)(content) as ExtractedComment[];
 
 const getMatchingComments = (content: string, specifier: string) => extractComments(content)
   .filter(({ value }) => value.includes(specifier))

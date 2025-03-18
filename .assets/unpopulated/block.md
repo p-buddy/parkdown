@@ -1,5 +1,5 @@
-Before:
+Before...
 
 [](<url>)
 
-:After
+...After

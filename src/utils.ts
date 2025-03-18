@@ -30,7 +30,7 @@ const processor = unified().use(remarkParse);
 
 export const parse = {
   md: (markdown: string) => processor.parse(markdown) satisfies AstRoot
-};
+} as const;
 
 export const getAllPositionNodes = <T extends NodeType>(ast: AstRoot, type?: T) => {
   type Node = SpecificNode<T> & HasPosition & { parentID: string; siblingIndex: number; siblingCount: number };

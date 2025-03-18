@@ -6,7 +6,7 @@ import { externalizeDeps } from 'vite-plugin-externalize-deps';
 const testPattern = "src/**/*.{test,spec}.{js,ts}"
 
 export default defineConfig({
-  plugins: [dts({ exclude: testPattern }), externalizeDeps()],
+  plugins: [dts({ exclude: testPattern, rollupTypes: true }), externalizeDeps({ nodeBuiltins: true })],
   build: {
     lib: {
       name: 'index',
