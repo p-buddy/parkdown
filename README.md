@@ -1,10 +1,14 @@
 # parkdown (p▼)
 
-`parkdown` is a tool to include other files' content within your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` corresponds to either:
+`parkdown` is a tool to include other file's content within your markdown using a link with no text (i.e. `[](<url>)`), where `<url>` corresponds to either:
   - a local file, e.g. `[](./other.md)` or `[](../root.md)`
   - **_COMING SOON_**: An external link 
 
 Markdown renderers shouldn't display these links, but [parkdown]() can process and populate them (and also hopefully your editor makes these links easy to navigate to).
+
+Additionally, [parkdown]() has a few built-in processing capabilities that can be applied to the included content, describe more in [Query Parameters](#query-parameters). 
+
+Collectively, [parkdown]() enables your documentation to behave a little more like code, and for your code to have a rightful place in your documentation.
 
 [](./.assets/invocation.md)
 <!-- p▼ BEGIN -->
