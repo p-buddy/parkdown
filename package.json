@@ -2,9 +2,14 @@
 	"name": "@p-buddy/parkdown",
 	"type": "module",
 	"private": false,
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"main": "src/index.ts",
 	"bin": "src/cli.ts",
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"publishConfig": {
 		"main": "dist/index.js",
 		"typings": "dist/index.d.ts",
@@ -15,7 +20,8 @@
 				"import": "dist/index.js",
 				"require": "dist/index.umd.cjs"
 			}
-		}
+		},
+		"access": "public"
 	},
 	"scripts": {
 		"build:lib": "vite build",
