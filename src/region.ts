@@ -1,13 +1,14 @@
 import { dedent } from "ts-dedent";
 import _extractComments from "extract-comments";
-import { Intervals } from "./utils"
+import { Intervals, sanitize } from "./utils"
 import { createParser, numberedParameters, type MethodDefinition } from "./api/";
 
+/** p▼: definition */
 const definitions = [
   "extract(id: string, 0?: string, 1?: string, 2?: string)",
   "remove(id: string, 0?: string, 1?: string, 2?: string)",
   "replace(id: string, with?: string, space?: string)",
-] satisfies MethodDefinition[];
+] /** p▼: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
 
@@ -93,20 +94,6 @@ export const removeContentWithinRegionSpecifiers = (content: string, ...specifie
     fullContent.collapse().map(slice).filter(Boolean).join("")
   ).trim();
 };
-
-/** p▼: sanitize */
-const sanitizations: [from: RegExp | string, to: string][] = [
-  [/'''/g, `"`],
-  [/''/g, `'`],
-  [/parkdown:\s+/g, ``],
-  [/p▼:\s+/g, ``],
-]
-
-const sanitize = (replacement: string, space?: string) => {
-  const sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
-  return space ? sanitized.replaceAll(space, " ") : sanitized;
-}
-/** p▼: sanitize */
 
 export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string) => {
   if (!specifier) return content;

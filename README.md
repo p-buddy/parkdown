@@ -1,20 +1,18 @@
 # parkdown (p▼)
 
-[](./.assets/inclusions.md)
-<!-- parkdown BEGIN -->
-## Inclusions
-
-You can _include_ other files' content within your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` corresponds to either:
+`parkdown` is a tool to include other files' content within your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` corresponds to either:
   - a local file, e.g. `[](./other.md)` or `[](../root.md)`
   - **_COMING SOON_**: An external link 
 
-Markdown renderers shouldn't display these links, but [parkdown]() can process and populate them (and also hopefully your editor makes them easy to navigate to).
+Markdown renderers shouldn't display these links, but [parkdown]() can process and populate them (and also hopefully your editor makes these links easy to navigate to).
 
-### Invocation
+[](./.assets/invocation.md)
+<!-- p▼ BEGIN -->
+## Invocation
 
 Invoke [parkdown's]() _inclusion_ functionality in your markdown files with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#`processMarkdownIncludes`-export):
 
-#### CLI (inclusions)
+### CLI (inclusions)
 
 The following commands are all equivalent:
 ```bash
@@ -23,10 +21,10 @@ npx parkdown -f README.md
 npx parkdown # defaults to processing inclusions in the 'README.md' file of the current working directory
 ```
 
-#### `populateMarkdownIncludes` export
+### `populateMarkdownIncludes` export
 
 [](.assets/code/inclusions.ts?region=replace(pkg,'''parkdown'''))
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```ts
 import { populateMarkdownInclusions } from "parkdown";
 
@@ -35,112 +33,115 @@ const writeFile = true;
 
 populateMarkdownInclusions(file, writeFile);
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
+<!-- p▼ END -->
 
-### Authoring
+[](./.assets/authoring.md)
+<!-- p▼ BEGIN -->
+## Authoring
 
-As mentioned above, you can author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
+You can author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
 
 How you author these "empty" links affects how they end up being rendered, either [inline](#inline) or as a [block](#block).
 
-#### Inline
+### Inline
 
 Inline inclusions occur when your "empty" link has siblings (meaning it's **not** the only node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1)).
 
 There are two equivalent ways to author inline inclusions, and which you choose depends on how you want your raw markdown to look.
 
-##### Option A (single line)
+#### Option A (single line)
 
 What you write:
 
 [](.assets/unpopulated/inline.single.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
 Before: [](<url>) :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
-What is rendered (**_before_** processing, sama as [Option B](#option-b-multi-line)):
+What is rendered (**_before_** processing, same as [Option B](#option-b-multi-line)):
 
 [](.assets/unpopulated/inline.single.md?wrap=quote&inline)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 > Before: [](<url>) :After
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/inline.single.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
-Before: [](<url>) <!-- parkdown Begin -->
+Before: [](<url>) <!-- p▼ Begin -->
 ...Included Content...
-...Included Content... <!-- parkdown End --> :After
+...Included Content... <!-- p▼ End --> :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
 
 [](.assets/populated/inline.single.md?wrap=quote&inline)
-<!-- parkdown BEGIN -->
-> Before: [](<url>) <!-- parkdown Begin -->
+<!-- p▼ BEGIN -->
+> Before: [](<url>) <!-- p▼ Begin -->
 ...Included Content...
-...Included Content... <!-- parkdown End --> :After
-<!-- parkdown END -->
+...Included Content... <!-- p▼ End --> :After
+<!-- p▼ END -->
 
-##### Option B (multi line)
+#### Option B (multi line)
 
 What you write:
 
 [](.assets/unpopulated/inline.multi.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
 Before: 
 [](<url>)
 :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
 
 [](.assets/unpopulated/inline.multi.md?wrap=quote&inline)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 > Before: 
 [](<url>)
 :After
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/inline.multi.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
 Before: 
-[](<url>) <!-- parkdown Begin (inline) -->
+[](<url>) <!-- p▼ Begin (inline) -->
 ...Included Content...
-...Included Content... <!-- parkdown End (inline) --> 
+...Included Content... <!-- p▼ End (inline) --> 
 :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
 
 [](.assets/populated/inline.multi.md?wrap=quote&inline)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 > Before: 
-[](<url>) <!-- parkdown Begin (inline) -->
+[](<url>) <!-- p▼ Begin (inline) -->
 ...Included Content...
-...Included Content... <!-- parkdown End (inline) --> 
+...Included Content... <!-- p▼ End (inline) --> 
 :After
-<!-- parkdown END -->
+<!-- p▼ END -->
 
-#### Block
+### Block
 
 Block inclusions occur when your "empty" link is the **only** node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1) (at least before being populated). This is likely the most common way to author inclusions.
 
 What you write:
 
 [](.assets/unpopulated/block.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
 Before:
 
@@ -148,12 +149,12 @@ Before:
 
 :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What is rendered (**_before_** processing):
 
 [](.assets/unpopulated/block.md?wrap=quote)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 <blockquote>
 
 Before:
@@ -164,72 +165,74 @@ Before:
 
 </blockquote>
 
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/block.md?wrap=code)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```md
 Before:
 
 [](<url>)
-<!-- parkdown Begin  -->
+<!-- p▼ Begin  -->
 ...Included Content...
 ...Included Content...
-<!-- parkdown End  -->
+<!-- p▼ End  -->
 
 :After
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
 What is rendered (**_after_** processing):
 
 [](.assets/populated/block.md?wrap=quote)
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 <blockquote>
 
 Before:
 
 [](<url>)
-<!-- parkdown Begin  -->
+<!-- p▼ Begin  -->
 ...Included Content...
 ...Included Content...
-<!-- parkdown End  -->
+<!-- p▼ End  -->
 
 :After
 
 </blockquote>
 
-<!-- parkdown END -->
+<!-- p▼ END -->
 
-#### Query parameters
+[](.assets/query.md?heading=-1)
+<!-- p▼ BEGIN -->
+### Query parameters
 
-You can pass query parameters to your inclusion links to control how they're processed.
+You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
 
-##### Processing Order
+#### Processing Order
 
 [](src/include.ts?&region=extract(query))
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```ts
 const params = new URLSearchParams(query);
+const headingModfiier = params.get("heading") ?? 0;
 const inlineOverride = params.has("inline");
 const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
 const skip = params.has("skip");
 const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
 ```
-<!-- parkdown END -->
+<!-- p▼ END -->
 
-##### `skip`
-```md
-[](...?skip)
-```
+#### `skip`
 
-[](src/include.ts?wrap=dropdown(See-default-behavior.)&region=extract(Default-Behavior),replace(...))
-<!-- parkdown BEGIN -->
+Skip the default processing behavior for the given type of file. 
+
+[](src/include.ts?wrap=dropdown(See-default-processing-behavior.)&region=extract(Default-Behavior),replace(...))
+<!-- p▼ BEGIN -->
 
 <details>
-<summary>See default behavior.</summary>
+<summary>See default processing behavior.</summary>
 
 ```ts
 if (extension === "md") {
@@ -241,25 +244,125 @@ else if (/^(js|ts)x?|svelte$/i.test(extension))
 ```
 </details>
 
-<!-- parkdown END -->
-
-##### `wrap`
-```md
-[](...?wrap=code)
-```
-
-##### `region`
+<!-- p▼ END -->
 
 ```md
-[](...?boundary=example)
+[](<url>?skip)
 ```
 
+#### `wrap`
 
-### Removing populated inclusions
+Wrap the content of the included file in a specific kind of element.
 
-Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#`removePopulatedInclusions`-export):
+Below is the currently supported API for the `wrap` query parameter, where each defined method signature can be _invoked_ as a value for the `wrap` parameter (e.g. `[](<url>?wrap=code)`, `[](<url>?wrap=dropdown(hello-world))`).
 
-#### CLI (removing populated inclusions)
+[](.assets/api-note.md?wrap=quote)
+<!-- p▼ BEGIN -->
+<blockquote>
+
+**_NOTE ON API USAGE:_** As you can see from the included examples, each _invocation_ of an API method looks like a less strict (more quirky) version of a typical javascript function invocation. 
+
+It's less-strict to hopefully make expressing yourself (in a markdown-compliant way) easier. It's more quirky because it aims to ensure both markdown compliance and character usage that is [safe for URLs](https://support.exactonline.com/community/s/knowledge-base#All-All-DNO-Content-urlcharacters), all while remaining easy to read and write.
+
+Please see the [full explanation](#query-parameters-with-function-like-apis) if the below is confusing.
+
+</blockquote>
+
+<!-- p▼ END -->
+
+[](src/wrap.ts?region=extract(definition))
+<!-- p▼ BEGIN -->
+```ts
+const definitions = [
+  /**
+   * Wraps the content in a markdown-formatted code block.
+   * @param lang The language of the code block (defaults to the file extension).
+   * @param meta Additional metadata to include in the top line of the code block (i.e. to the right of the `lang`).
+   * @example [](<url>?wrap=code)
+   * @example [](<url>?wrap=code())
+   * @example [](<url>?wrap=code(ts))
+   * @example [](<url>?wrap=code(,some-meta))
+   */
+  "code(lang?: string, meta?: string)",
+
+  /**
+   * Wraps the content in a markdown-formatted blockquote 
+   * (using the `>` character if the content is a single line, 
+   * or the `<blockquote>` tag if the content is a multi-line block).
+   * @example [](<url>?wrap=quote)
+   * @example [](<url>?wrap=quote())
+   * @example [](<url>?wrap=quote(,))
+   */
+  "quote()",
+
+  /**
+   * Wraps the content in a markdown-formatted dropdown (using the `<details>` and `<summary>` tags).
+   * @param summary The summary text of the dropdown.
+   * @param open Whether the dropdown should be open by default.
+   * @param space The space character to use between words in the summary (defaults to `-`).
+   * @example [](<url>?wrap=dropdown(hello-world))
+   * @example [](<url>?wrap=dropdown('hello,-world',true))
+   * @example [](<url>?wrap=dropdown(hello_world,,_)) 
+   */
+  "dropdown(summary: string, open?: boolean, space?: string)",
+
+]
+```
+<!-- p▼ END -->
+
+#### `region`
+
+Either extract, remove, or replace content from the included file based on the provided specifier(s).
+
+Specifiers will be searched for within the file's comments, and are expected to come in pairs / bookend the desired region, like so:
+
+```ts
+/** some-specifier */
+... code to find ...
+/** some-specifier */
+```
+
+```md
+[](...?region=extract(some-specifier))
+```
+
+Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter (e.g. `[](<url>?region=extract(some-specifier))`, `[](<url>?region=remove(some-specifier))`, `[](<url>?region=replace(some-specifier))`).
+
+[](.assets/api-note.md?wrap=quote)
+<!-- p▼ BEGIN -->
+<blockquote>
+
+**_NOTE ON API USAGE:_** As you can see from the included examples, each _invocation_ of an API method looks like a less strict (more quirky) version of a typical javascript function invocation. 
+
+It's less-strict to hopefully make expressing yourself (in a markdown-compliant way) easier. It's more quirky because it aims to ensure both markdown compliance and character usage that is [safe for URLs](https://support.exactonline.com/community/s/knowledge-base#All-All-DNO-Content-urlcharacters), all while remaining easy to read and write.
+
+Please see the [full explanation](#query-parameters-with-function-like-apis) if the below is confusing.
+
+</blockquote>
+
+<!-- p▼ END -->
+
+[](src/region.ts?region=extract(definition))
+<!-- p▼ BEGIN -->
+```ts
+const definitions = [
+  "extract(id: string, 0?: string, 1?: string, 2?: string)",
+  "remove(id: string, 0?: string, 1?: string, 2?: string)",
+  "replace(id: string, with?: string, space?: string)",
+]
+```
+<!-- p▼ END -->
+
+<!-- p▼ END -->
+<!-- p▼ END -->
+
+[](./.assets/depopulated.md)
+<!-- p▼ BEGIN -->
+## Removing populated inclusions
+
+Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#depopulateMarkdownIncludes-export):
+
+### CLI (removing populated inclusions)
 
 The following commands are all equivalent:
 
@@ -277,18 +380,17 @@ npx parkdown -f README.md -d
 npx parkdown -d # defaults to processing the 'README.md' file of the current working directory
 ```
 
-#### `depopulateMarkdownIncludes` export
+### `depopulateMarkdownIncludes` export
 
 [](.assets/code/depopulate.ts?region=replace(pkg,'''parkdown'''))
-<!-- parkdown BEGIN -->
+<!-- p▼ BEGIN -->
 ```ts
-import { depopulateMarkdownInclusions } from  "parkdown";
+import { depopulateMarkdownInclusions } from "parkdown";
 
 const file = "README.md";
 const writeFile = true;
 
 depopulateMarkdownInclusions(file, writeFile);
 ```
-<!-- parkdown END -->
-
-<!-- parkdown END -->
+<!-- p▼ END -->
+<!-- p▼ END -->
