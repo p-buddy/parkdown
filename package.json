@@ -2,7 +2,7 @@
 	"name": "@p-buddy/parkdown",
 	"type": "module",
 	"private": false,
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"main": "src/index.ts",
 	"bin": "src/cli.ts",
 	"files": [
@@ -11,14 +11,14 @@
 		"LICENSE"
 	],
 	"publishConfig": {
-		"main": "dist/index.js",
-		"typings": "dist/index.d.ts",
-		"bin": "dist/cli.js",
+		"main": "./dist/index.js",
+		"typings": "./dist/index.d.ts",
+		"bin": "./dist/cli.js",
 		"exports": {
 			".": {
-				"types": "dist/index.d.ts",
-				"import": "dist/index.js",
-				"require": "dist/index.umd.cjs"
+				"types": "./dist/index.d.ts",
+				"import": "./dist/index.js",
+				"require": "./dist/index.umd.cjs"
 			}
 		},
 		"access": "public"
