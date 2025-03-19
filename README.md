@@ -9,7 +9,7 @@ Collectively, [parkdown]() enables your documentation to behave a little more li
 
 [](./.assets/invocation.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 29 chars: 743 -->
+<!-- p↓ length lines: 25 chars: 797 -->
 ## Invocation
 
 Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#populateMarkdownIncludes-export):
@@ -18,32 +18,28 @@ Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or vi
 
 The following commands are all equivalent:
 ```bash
-npx parkdown --file ./README.md
-npx parkdown -f README.md
-npx parkdown # defaults to processing inclusions in the 'README.md' file of the current working directory
+npx @p-buddy/parkdown --file ./README.md
+npx @p-buddy/parkdown -f README.md
+npx @p-buddy/parkdown # defaults to processing inclusions in the 'README.md' file of the current working directory
 ```
 
 ### `populateMarkdownIncludes` export
 
-[](.assets/code/inclusions.ts?region=replace(pkg,'''parkdown'''))
+[](.assets/code/inclusions.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 10 chars: 163 -->
-
-```ts
-import { populateMarkdownInclusions } from "parkdown";
+<!-- p↓ length lines: 6 chars: 182 -->
+import { populateMarkdownInclusions } from /** p↓: pkg */ "../../src" /** p↓: pkg */;
 
 const file = "README.md";
 const writeFile = true;
 
 populateMarkdownInclusions(file, writeFile);
-```
-
 <!-- p↓ END -->
 <!-- p↓ END -->
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 413 chars: 11626 -->
+<!-- p↓ length lines: 428 chars: 11834 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -70,7 +66,10 @@ Before... [](<url>) ...After
 
 <!-- p↓ END -->
 
-What is rendered (**_before_** processing, same as [Option B](#option-b-multi-line)):
+<details>
+<summary>See rendering and processing output</summary>
+
+What is rendered (**_before_** processing, same as [Multi-line](#multi-line)):
 
 [](.assets/unpopulated/inline.single.md?wrap=quote&inline)
 <!-- p↓ BEGIN -->
@@ -92,7 +91,7 @@ Before... [](<url>) <!-- p↓ Begin -->
 
 <!-- p↓ END -->
 
-What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
+What is rendered (**_after_** processing, same as [Multi-line](#multi-line)):
 
 [](.assets/populated/inline.single.md?wrap=quote&inline)
 <!-- p↓ BEGIN -->
@@ -101,6 +100,8 @@ What is rendered (**_after_** processing, same as [Option B](#option-b-multi-lin
 ...Included Content...
 ...Included Content... <!-- p↓ End --> ...After
 <!-- p↓ END -->
+
+</details>
 
 #### Multi-line
 
@@ -118,7 +119,10 @@ Before...
 
 <!-- p↓ END -->
 
-What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
+<details>
+<summary>See rendering and processing output</summary>
+
+What is rendered (**_before_** processing, same as [Single-line](#single-line)):
 
 [](.assets/unpopulated/inline.multi.md?wrap=quote&inline)
 <!-- p↓ BEGIN -->
@@ -144,7 +148,7 @@ Before...
 
 <!-- p↓ END -->
 
-What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
+What is rendered (**_after_** processing, same as [Single-line](#single-line)):
 
 [](.assets/populated/inline.multi.md?wrap=quote&inline)
 <!-- p↓ BEGIN -->
@@ -155,6 +159,8 @@ What is rendered (**_after_** processing, same as [Option A](#option-a-single-li
 ...Included Content... <!-- p↓ End --> 
 ...After
 <!-- p↓ END -->
+
+</details>
 
 ### Block
 
@@ -175,6 +181,9 @@ Before...
 ```
 
 <!-- p↓ END -->
+
+<details>
+<summary>See rendering and processing output</summary>
 
 What is rendered (**_before_** processing):
 
@@ -235,6 +244,8 @@ Before...
 </blockquote>
 
 <!-- p↓ END -->
+
+</details>
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
@@ -461,7 +472,7 @@ const definitions = [
 
 [](./.assets/depopulated.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 38 chars: 1393 -->
+<!-- p↓ length lines: 34 chars: 1474 -->
 ## Removing populated inclusions
 
 Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#depopulateMarkdownIncludes-export):
@@ -471,33 +482,29 @@ Sometimes you may want to remove populated inclusions from your markdown file, s
 The following commands are all equivalent:
 
 ```bash
-npx parkdown --file ./README.md --depopulate --no-inclusions
-npx parkdown -f README.md -d --ni # Notice the double-dash (--) on 'ni'
-npx parkdown -d --ni # defaults to processing the 'README.md' file of the current working directory
+npx @p-buddy/parkdown --file ./README.md --depopulate --no-inclusions
+npx @p-buddy/parkdown -f README.md -d --ni # Notice the double-dash (--) on 'ni'
+npx @p-buddy/parkdown -d --ni # defaults to processing the 'README.md' file of the current working directory
 ```
 
 The following commands will lead to the same result, but since `--no-inclusions` (`--ni`) is not specified, there will be some wasted work as inclusions will be processed and then removed.
 
 ```bash
-npx parkdown --file ./README.md --depopulate
-npx parkdown -f README.md -d
-npx parkdown -d # defaults to processing the 'README.md' file of the current working directory
+npx @p-buddy/parkdown --file ./README.md --depopulate
+npx @p-buddy/parkdown -f README.md -d
+npx @p-buddy/parkdown -d # defaults to processing the 'README.md' file of the current working directory
 ```
 
 ### `depopulateMarkdownIncludes` export
 
-[](.assets/code/depopulate.ts?region=replace(pkg,'''parkdown'''))
+[](.assets/code/depopulate.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 10 chars: 167 -->
-
-```ts
-import { depopulateMarkdownInclusions } from "parkdown";
+<!-- p↓ length lines: 6 chars: 186 -->
+import { depopulateMarkdownInclusions } from /** p↓: pkg */ "../../src" /** p↓: pkg */;
 
 const file = "README.md";
 const writeFile = true;
 
 depopulateMarkdownInclusions(file, writeFile);
-```
-
 <!-- p↓ END -->
 <!-- p↓ END -->

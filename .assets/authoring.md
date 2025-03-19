@@ -16,7 +16,10 @@ What you write:
 
 [](./unpopulated/inline.single.md?wrap=code)
 
-What is rendered (**_before_** processing, same as [Option B](#option-b-multi-line)):
+<details>
+<summary>See rendering and processing output</summary>
+
+What is rendered (**_before_** processing, same as [Multi-line](#multi-line)):
 
 [](./unpopulated/inline.single.md?wrap=quote&inline)
 
@@ -24,9 +27,11 @@ What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.single.md?wrap=code)
 
-What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
+What is rendered (**_after_** processing, same as [Multi-line](#multi-line)):
 
 [](./populated/inline.single.md?wrap=quote&inline)
+
+</details>
 
 ### Multi-line
 
@@ -34,7 +39,10 @@ What you write:
 
 [](./unpopulated/inline.multi.md?wrap=code)
 
-What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
+<details>
+<summary>See rendering and processing output</summary>
+
+What is rendered (**_before_** processing, same as [Single-line](#single-line)):
 
 [](./unpopulated/inline.multi.md?wrap=quote&inline)
 
@@ -42,9 +50,11 @@ What your markdown file contains (**_after_** processing):
 
 [](./populated/inline.multi.md?wrap=code)
 
-What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
+What is rendered (**_after_** processing, same as [Single-line](#single-line)):
 
 [](./populated/inline.multi.md?wrap=quote&inline)
+
+</details>
 
 ## Block
 
@@ -53,6 +63,9 @@ Block inclusions occur when your "empty" link is the **only** node in a [paragra
 What you write:
 
 [](./unpopulated/block.md?wrap=code)
+
+<details>
+<summary>See rendering and processing output</summary>
 
 What is rendered (**_before_** processing):
 
@@ -65,5 +78,7 @@ What your markdown file contains (**_after_** processing):
 What is rendered (**_after_** processing):
 
 [](./populated/block.md?wrap=quote)
+
+</details>
 
 [](./query.md?heading=-1)
