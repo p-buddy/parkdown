@@ -169,6 +169,6 @@ export const applyRegion = (content: string, query: string) => {
       content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
       break;
   }
-
-  return removeParkdownComments(content);
+  return content;
+  //return removeParkdownComments(content);
 }
