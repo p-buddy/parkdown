@@ -3,9 +3,10 @@
 `parkdown` allows you to include other file's content within your markdown using a link with no text (i.e. `[](<url>)`), where `<url>` corresponds to either:
   - a local file, e.g. `[](./other.md)` or `[](../root.ts)`
   - **_COMING SOON_**: An external link 
-o navigate to, improving productivity.
 
-Collectively, [parkdown]() enables your documentation to behave a little more like code, and for your code to have a rightful place in your documentation.
+Markdown renderers shouldn't display these links, but [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) can process and populate them. Also, your editor hopefully makes these links easy to navigate to, improving productivity.
+
+Collectively, [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) enables your documentation to behave a little more like code, and for your code to have a rightful place in your documentation.
 
 [](./.assets/invocation.md)
 <!-- p↓ BEGIN -->
