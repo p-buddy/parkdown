@@ -1,4 +1,5 @@
 import { createParser, type MethodDefinition } from "./api/";
+import { sanitize } from "./utils";
 
 /** p↓: definition */
 const definitions = [
@@ -36,10 +37,6 @@ const definitions = [
 
 ] /** p↓: definition */ satisfies (MethodDefinition)[];
 
-/** p↓: Default-Space */
-const DEFAULT_SPACE = "-";
-/** p↓: Default-Space */
-
 const parse = createParser(definitions);
 
 const lined = (content: string, count = 1) =>
@@ -63,7 +60,7 @@ export const wrap = (content: string, query: string, details?: { extension: stri
         ? `> ${content}`
         : lined(tag(lined(content), "blockquote"));
     case "dropdown":
-      const summary = tag(parsed.summary.split(parsed.space ?? DEFAULT_SPACE).join(" "), "summary");
+      const summary = tag(sanitize(parsed.summary), "summary");
       return lined(tag([summary, content].join("\n"), "details", parsed.open ? "open" : undefined));
   }
 }

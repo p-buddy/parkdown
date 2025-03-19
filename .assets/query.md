@@ -18,10 +18,6 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-```md
-[](...?region=extract(some-specifier))
-```
-
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
 - `[](<url>?region=extract(some-specifier))`
@@ -77,3 +73,5 @@ Below is the currently supported API for the `wrap` query parameter, where each 
 [](./api-note.md?wrap=quote)
 
 [](../src/wrap.ts?region=extract(definition))
+
+[](./api.md?heading=-1)

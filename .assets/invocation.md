@@ -13,4 +13,4 @@ npx @p-buddy/parkdown # defaults to processing inclusions in the 'README.md' fil
 
 ## `populateMarkdownIncludes` export
 
-[](./code/inclusions.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
+[](./code/inclusions.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))

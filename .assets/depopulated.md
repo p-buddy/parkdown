@@ -22,4 +22,4 @@ npx @p-buddy/parkdown -d # defaults to processing the 'README.md' file of the cu
 
 ## `depopulateMarkdownIncludes` export
 
-[](./code/depopulate.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
+[](./code/depopulate.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))

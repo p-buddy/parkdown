@@ -1,4 +1,4 @@
-## Query Parameters with Function-like APIs
+# Query Parameters with Function-like APIs
 
 Some query parameters have more complex APIs, which are defined by a collection of typescript function singatures (limited to only `string`, `boolean`, and `number` arguments), like:
 
@@ -24,6 +24,10 @@ Please note the following:
 - Methods that take no arguments can be invoked without parentheses (e.g. `[](<url>?example=method)`).
 - String arguments do not need to be wrapped in quotes (e.g. `[](<url>?example=method(some-string))`), and they **CANNOT** be wrapped in double quotes (see more below).
 - You cannot use spaces within a string argument or anywhere else in the query (as this would violate the markdown link syntax). For arguments that reasonably could include spaces, there should be an optional `space` argument that defaults to `-`, so that any usage of the space character will be converted to a space (e.g. `hello-world` becomes `hello world`).
+- Characters that are reserved or unsafe in URLs can be included by using the below remapping, where you'll write the corresponding key wrapped in the applicable `space` character (see the above bullet point, defaults to `-`). For example, if you want to use a `/`, you'd instead write `-slash-` (or with whatever you specify as your space character instead of `-`).
+
+[](../src/utils.ts?region=extract(url))
+
 - If a method takes a string argument, and you want to include a comma within that argument, you must wrap it in one or more single quotes (e.g.`hello,-world` should be specified as `'hello,-world'`). 
 - String arguments wrapped in a single set of single quotes will automatically have the quotes removed when the query is parsed (e.g. the argument included in `[](<url>?example=method('hello,world'))` will parse to `hello,world`).
 - If you want single quotes preserved in the parsed output, use two single quotes in a row (e.g. `[](<url>?example=method(''single-quoted''))`). 

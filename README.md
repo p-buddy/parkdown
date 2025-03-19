@@ -9,7 +9,7 @@ Collectively, [parkdown]() enables your documentation to behave a little more li
 
 [](./.assets/invocation.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 25 chars: 797 -->
+<!-- p↓ length lines: 29 chars: 796 -->
 ## Invocation
 
 Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#populateMarkdownIncludes-export):
@@ -25,21 +25,25 @@ npx @p-buddy/parkdown # defaults to processing inclusions in the 'README.md' fil
 
 ### `populateMarkdownIncludes` export
 
-[](.assets/code/inclusions.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
+[](.assets/code/inclusions.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 6 chars: 182 -->
-import { populateMarkdownInclusions } from /** p↓: pkg */ "../../src" /** p↓: pkg */;
+<!-- p↓ length lines: 10 chars: 172 -->
+
+```ts
+import { populateMarkdownInclusions } from "@p-buddy/parkdown";
 
 const file = "README.md";
 const writeFile = true;
 
 populateMarkdownInclusions(file, writeFile);
+```
+
 <!-- p↓ END -->
 <!-- p↓ END -->
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 428 chars: 11834 -->
+<!-- p↓ length lines: 521 chars: 16610 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -249,7 +253,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 217 chars: 7332 -->
+<!-- p↓ length lines: 310 chars: 12107 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -281,10 +285,6 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ... code to find ...
 /** some-specifier */
-```
-
-```md
-[](...?region=extract(some-specifier))
 ```
 
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
@@ -467,12 +467,109 @@ const definitions = [
 
 <!-- p↓ END -->
 
+[](.assets/api.md?heading=-1)
+<!-- p↓ BEGIN -->
+<!-- p↓ length lines: 93 chars: 4719 -->
+#### Query Parameters with Function-like APIs
+
+Some query parameters have more complex APIs, which are defined by a collection of typescript function singatures (limited to only `string`, `boolean`, and `number` arguments), like:
+
+```ts
+const definitions = [
+  "method(arg1: string, arg2: boolean, arg3?: number)",
+  "otherMethod(arg1: string, arg2?: boolean, arg3?: number)"
+]
+```
+
+These APIs are utilized when setting the value of the specific query parameter with a _function-like_ invocation syntax, such as:
+
+```md
+[](<url>?example=method(hello-world,true))
+```
+
+As you can see from the example above, we're relaxing some constraints on typical function invocations (like the need to wrap string arguments in quotes), while also imposing some additional constraints (like not using _any_ spaces) to ensure the links are valid markdown and the URLs are [safe](https://support.exactonline.com/community/s/knowledge-base?language=en_GB#All-All-DNO-Content-urlcharacters).
+
+The goal is to make it as painless as possible to author links that are valid markdown, valid URLs, and easy to read and write.
+
+Please note the following:
+
+- Methods that take no arguments can be invoked without parentheses (e.g. `[](<url>?example=method)`).
+- String arguments do not need to be wrapped in quotes (e.g. `[](<url>?example=method(some-string))`), and they **CANNOT** be wrapped in double quotes (see more below).
+- You cannot use spaces within a string argument or anywhere else in the query (as this would violate the markdown link syntax). For arguments that reasonably could include spaces, there should be an optional `space` argument that defaults to `-`, so that any usage of the space character will be converted to a space (e.g. `hello-world` becomes `hello world`).
+- Characters that are reserved or unsafe in URLs can be included by using the below remapping, where you'll write the corresponding key wrapped in the applicable `space` character (see the above bullet point, defaults to `-`). For example, if you want to use a `/`, you'd instead write `-slash-` (or with whatever you specify as your space character instead of `-`).
+
+[](src/utils.ts?region=extract(url))
+<!-- p↓ BEGIN -->
+<!-- p↓ length lines: 31 chars: 498 -->
+
+```ts
+const urlCharacters = {
+  reserved: {
+    ["semi"]: ";",
+    ["slash"]: "/",
+    ["question"]: "?",
+    ["colon"]: ":",
+    ["at"]: "@",
+    ["equal"]: "=",
+    ["and"]: "&",
+  },
+  unsafe: {
+    ["quote"]: "\"",
+    ["angle"]: "<",
+    ["unangle"]: ">",
+    ["hash"]: "#",
+    ["percent"]: "%",
+    ["curly"]: "{",
+    ["uncurly"]: "}",
+    ["pipe"]: "|",
+    ["back"]: "\\",
+    ["carrot"]: "^",
+    ["tilde"]: "~",
+    ["square"]: "[",
+    ["unsquare"]: "]",
+    ["tick"]: "`",
+  }
+}
+```
+
+<!-- p↓ END -->
+
+- If a method takes a string argument, and you want to include a comma within that argument, you must wrap it in one or more single quotes (e.g.`hello,-world` should be specified as `'hello,-world'`). 
+- String arguments wrapped in a single set of single quotes will automatically have the quotes removed when the query is parsed (e.g. the argument included in `[](<url>?example=method('hello,world'))` will parse to `hello,world`).
+- If you want single quotes preserved in the parsed output, use two single quotes in a row (e.g. `[](<url>?example=method(''single-quoted''))`). 
+- You cannot use double quotes within a string argument (as they are not a [URL safe character](https://support.exactonline.com/community/s/knowledge-base#All-All-DNO-Content-urlcharacters)). To include a double-quote in the parsed output, use three single quotes in a row (e.g. `[](<url>?example=method('''double-quoted'''))`).
+- Optional arguments can be completely ommitted (for example if a `method` took 3 optional arguments, and you only wanted to provide the third, you could do the following: `[](<url>?example=method(,,your-third-argument))`).
+- Overall, text meant to be displayed will be _sanitized_ in the following manner (unless otherwise noted):
+
+[](src/utils.ts?region=extract(sanitize))
+<!-- p↓ BEGIN -->
+<!-- p↓ length lines: 18 chars: 617 -->
+
+```ts
+const sanitizations: [from: RegExp | string, to: string][] = [
+  [/'''/g, `"`],
+  [/''/g, `'`],
+  [/parkdown:\s+/g, ``],
+  [/p↓:\s+/g, ``],
+]
+
+export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
+  let sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
+  sanitized = [...(Object.entries(urlCharacters.unsafe)), ...(Object.entries(urlCharacters.reserved))]
+    .map(([key, to]) => ({ from: space + key + space, to }))
+    .reduce((acc, { from, to }) => acc.replaceAll(from, to), sanitized);
+  return sanitized.replaceAll(space, " ");
+}
+```
+
+<!-- p↓ END -->
+<!-- p↓ END -->
 <!-- p↓ END -->
 <!-- p↓ END -->
 
 [](./.assets/depopulated.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 34 chars: 1474 -->
+<!-- p↓ length lines: 38 chars: 1473 -->
 ## Removing populated inclusions
 
 Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#depopulateMarkdownIncludes-export):
@@ -497,14 +594,18 @@ npx @p-buddy/parkdown -d # defaults to processing the 'README.md' file of the cu
 
 ### `depopulateMarkdownIncludes` export
 
-[](.assets/code/depopulate.ts?region=replace(pkg,'''@p-buddy/parkdown'''))
+[](.assets/code/depopulate.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 6 chars: 186 -->
-import { depopulateMarkdownInclusions } from /** p↓: pkg */ "../../src" /** p↓: pkg */;
+<!-- p↓ length lines: 10 chars: 176 -->
+
+```ts
+import { depopulateMarkdownInclusions } from "@p-buddy/parkdown";
 
 const file = "README.md";
 const writeFile = true;
 
 depopulateMarkdownInclusions(file, writeFile);
+```
+
 <!-- p↓ END -->
 <!-- p↓ END -->

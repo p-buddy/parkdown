@@ -169,6 +169,40 @@ export class Intervals {
 
 export const COMMA_NOT_IN_PARENTHESIS = /,\s*(?![^()]*\))/;
 
+/** p↓: url */
+const urlCharacters = {
+  reserved: {
+    ["semi"]: ";",
+    ["slash"]: "/",
+    ["question"]: "?",
+    ["colon"]: ":",
+    ["at"]: "@",
+    ["equal"]: "=",
+    ["and"]: "&",
+  },
+  unsafe: {
+    ["quote"]: "\"",
+    ["angle"]: "<",
+    ["unangle"]: ">",
+    ["hash"]: "#",
+    ["percent"]: "%",
+    ["curly"]: "{",
+    ["uncurly"]: "}",
+    ["pipe"]: "|",
+    ["back"]: "\\",
+    ["carrot"]: "^",
+    ["tilde"]: "~",
+    ["square"]: "[",
+    ["unsquare"]: "]",
+    ["tick"]: "`",
+  }
+}
+/** p↓: url */
+
+/** p↓: Default-Space */
+const DEFAULT_SPACE = "-";
+/** p↓: Default-Space */
+
 /** p↓: sanitize */
 const sanitizations: [from: RegExp | string, to: string][] = [
   [/'''/g, `"`],
@@ -177,8 +211,11 @@ const sanitizations: [from: RegExp | string, to: string][] = [
   [/p↓:\s+/g, ``],
 ]
 
-export const sanitize = (replacement: string, space: string = "-") => {
-  const sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
-  return space ? sanitized.replaceAll(space, " ") : sanitized;
+export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
+  let sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
+  sanitized = [...(Object.entries(urlCharacters.unsafe)), ...(Object.entries(urlCharacters.reserved))]
+    .map(([key, to]) => ({ from: space + key + space, to }))
+    .reduce((acc, { from, to }) => acc.replaceAll(from, to), sanitized);
+  return sanitized.replaceAll(space, " ");
 }
 /** p↓: sanitize */
