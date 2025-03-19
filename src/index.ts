@@ -15,7 +15,7 @@ const tryResolveFile = (file: string) => {
 export const populateMarkdownInclusions = (file: string, writeFile = true) => {
   const { dir, path, markdown } = tryResolveFile(file);
   const getContent = (relative: string) => read(resolve(dir, removeQueryParams(relative)));
-  const result = recursivelyPopulateInclusions(markdown, 0, getContent);
+  const result = recursivelyPopulateInclusions(markdown, 0, getContent, path);
   if (writeFile) writeFileSync(path, result);
   return result;
 };

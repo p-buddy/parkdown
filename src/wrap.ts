@@ -42,11 +42,11 @@ const DEFAULT_SPACE = "-";
 
 const parse = createParser(definitions);
 
-const newlinify = (content: string, count = 1) =>
+const lined = (content: string, count = 1) =>
   "\n".repeat(count) + content + "\n".repeat(count);
 
 const tag = (content: string, tag: "summary" | "details" | "blockquote", attributes?: string) =>
-  `<${tag}${attributes ? ` ${attributes}` : ""}>${newlinify(content)}</${tag}>`;
+  `<${tag}${attributes ? ` ${attributes}` : ""}>${lined(content)}</${tag}>`;
 
 export const wrap = (content: string, query: string, details?: { extension: string, inline: boolean }): string => {
   const parsed = parse(query);
@@ -57,13 +57,13 @@ export const wrap = (content: string, query: string, details?: { extension: stri
       if (inlineCode) return `\`${content}\``;
       const lang = parsed.lang ?? details?.extension ?? "";
       const meta = parsed.meta ? ` ${parsed.meta}` : "";
-      return `\`\`\`${lang}${meta}${newlinify(content)}\`\`\``;
+      return lined(`\`\`\`${lang}${meta}${lined(content)}\`\`\``);
     case "quote":
       return details?.inline && !content.includes("\n\n")
         ? `> ${content}`
-        : tag(newlinify(content), "blockquote");
+        : lined(tag(lined(content), "blockquote"));
     case "dropdown":
       const summary = tag(parsed.summary.split(parsed.space ?? DEFAULT_SPACE).join(" "), "summary");
-      return newlinify(tag([summary, content].join("\n"), "details", parsed.open ? "open" : undefined));
+      return lined(tag([summary, content].join("\n"), "details", parsed.open ? "open" : undefined));
   }
 }

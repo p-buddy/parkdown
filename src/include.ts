@@ -3,7 +3,7 @@ import { getAllPositionNodes, parse, hasPosition, linkHasNoText, lined, spaced, 
 import { type AstRoot, type Link, type PositionNode, type HasPosition, COMMA_NOT_IN_PARENTHESIS } from "./utils"
 import { dirname, join, basename } from "node:path";
 import { wrap } from "./wrap";
-import { applyRegion, extractContentWithinRegionSpecifiers } from "./region";
+import { applyRegion } from "./region";
 
 const specialLinkTargets = ["http", "./", "../"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
@@ -22,6 +22,11 @@ export const specialComment = {
   _flag: "p↓" as const,
   get begin() { return spaced(specialComment._open, specialComment._flag, "BEGIN", specialComment._close) },
   get end() { return spaced(specialComment._open, specialComment._flag, "END", specialComment._close) },
+  lengthOf(content: string) {
+    const lines = `lines: ${content.split("\n").length}`;
+    const chars = `chars: ${content.length}`;
+    return spaced(specialComment._open, specialComment._flag, "length", lines, chars, specialComment._close);
+  }
 };
 
 export type SpecialComment<T extends CommentType = CommentType> = PositionNode<"html"> & { value: typeof specialComment[T] };
@@ -44,9 +49,13 @@ const replacePopulated = (
 ): ReplacementTarget => ({ position: { start, end }, url, headingDepth, inline: siblingCount >= 1 });
 
 export const getReplacementContent = (target: Pick<ReplacementTarget, "url" | "inline">, content: string, relative?: string) =>
-  target.inline
-    ? `${specialLinkText(target, relative)} ${specialComment.begin} ${content} ${specialComment.end}` as const
-    : lined(specialLinkText(target, relative), specialComment.begin, content, specialComment.end);
+  (target.inline ? spaced : lined)(
+    specialLinkText(target, relative),
+    specialComment.begin,
+    specialComment.lengthOf(content),
+    content,
+    specialComment.end
+  );
 
 export const nodeDepthFinder = (ast: AstRoot) => {
   const headingDepth = getAllPositionNodes(ast, "heading")
@@ -176,77 +185,83 @@ export const recursivelyPopulateInclusions = (
   markdown: string,
   headingDepth: number,
   getRelativePathContent: GetRelativePathContent,
+  url: string,
   basePath?: string
 ) => {
-  markdown = removePopulatedInclusions(markdown);
-  markdown = applyHeadingDepth(markdown, headingDepth);
-  const ast = parse.md(markdown);
+  try {
+    markdown = removePopulatedInclusions(markdown);
+    markdown = applyHeadingDepth(markdown, headingDepth);
+    const ast = parse.md(markdown);
 
-  return getReplacementTargets(markdown, ast)
-    .sort(nodeSort)
-    .reverse()
-    .map(target => {
-      const { url, headingDepth } = target;
-      const [base, ...splitOnMark] = basename(url).split("?");
-      const extension = base.split(".").pop() ?? "";
-      const query = splitOnMark.join("?");
-      const dir = dirname(url);
-      const path = join(dir, base);
+    return getReplacementTargets(markdown, ast)
+      .sort(nodeSort)
+      .reverse()
+      .map(target => {
+        const { url, headingDepth } = target;
+        const [base, ...splitOnMark] = basename(url).split("?");
+        const extension = base.split(".").pop() ?? "";
+        const query = splitOnMark.join("?");
+        const dir = dirname(url);
+        const path = join(dir, base);
 
-      if (url.startsWith("./") || url.startsWith("../")) {
-        let content = getRelativePathContent(path);
+        if (url.startsWith("./") || url.startsWith("../")) {
+          let content = getRelativePathContent(path);
 
-        /** p↓: query */
-        const params = new URLSearchParams(query);
-        /** p↓: query */
+          /** p↓: query */
+          const params = new URLSearchParams(query);
+          /** p↓: query */
 
-        /** p↓: query */
-        const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
-        /** p↓: query */
-        content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
+          /** p↓: query */
+          const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+          /** p↓: query */
+          content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
 
-        /** p↓: query */
-        const skip = params.has("skip");
-        /** p↓: query */
+          /** p↓: query */
+          const skip = params.has("skip");
+          /** p↓: query */
 
-        /** p↓: query */
-        const headingModfiier = params.get("heading") ?? 0;
-        /** p↓: query */
+          /** p↓: query */
+          const headingModfiier = params.get("heading") ?? 0;
+          /** p↓: query */
 
-        /** p↓: query */
-        const inlineOverride = params.has("inline");
-        /** p↓: query */
+          /** p↓: query */
+          const inlineOverride = params.has("inline");
+          /** p↓: query */
 
-        let { inline } = target;
-        if (inlineOverride) inline = true;
+          let { inline } = target;
+          if (inlineOverride) inline = true;
 
-        if (!skip)
+          if (!skip)
+            /** p↓: Default-Behavior */
+            if (extension === "md") {
+              /** p↓: ... */
+              const getContent = extendGetRelativePathContent(getRelativePathContent, target);
+              const relative = basePath ? join(basePath, dir) : dir;
+              const depth = clampHeadingSum(headingDepth, Number(headingModfiier));
+              /** p↓: ... */
+              content = recursivelyPopulateInclusions(content, /** p↓: ... */ depth, getContent, path, relative /** p↓: ... */);
+            }
+            else if (/^(js|ts)x?|svelte$/i.test(extension))
+              content = wrap(content, "code", /** p↓: ... */ { extension, inline } /** p↓: ... */);
           /** p↓: Default-Behavior */
-          if (extension === "md") {
-            /** p↓: ... */
-            const getContent = extendGetRelativePathContent(getRelativePathContent, target);
-            const relative = basePath ? join(basePath, dir) : dir;
-            const depth = clampHeadingSum(headingDepth, Number(headingModfiier));
-            /** p↓: ... */
-            content = recursivelyPopulateInclusions(content, /** p↓: ... */ depth, getContent, relative /** p↓: ... */);
-          }
-          else if (/^(js|ts)x?|svelte$/i.test(extension))
-            content = wrap(content, "code", /** p↓: ... */ { extension, inline } /** p↓: ... */);
-        /** p↓: Default-Behavior */
 
-        /** p↓: query */
-        const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
-        /** p↓: query */
-        content = wraps
-          ?.reduce((content, query) => wrap(content, query, { extension, inline }), content)
-          ?? content;
+          /** p↓: query */
+          const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
+          /** p↓: query */
+          content = wraps
+            ?.reduce((content, query) => wrap(content, query, { extension, inline }), content)
+            ?? content;
 
-        return { target, content: getReplacementContent(target, content, basePath) };
-      }
-      else if (url.startsWith("http"))
-        throw new Error("External web links are not implemented yet");
-      else
-        throw new Error(`Unsupported link type: ${url}`);
-    })
-    .reduce((acc, { target, content }) => replaceWithContent(acc, content, target), markdown);
+          return { target, content: getReplacementContent(target, content, basePath) };
+        }
+        else if (url.startsWith("http"))
+          throw new Error("External web links are not implemented yet");
+        else
+          throw new Error(`Unsupported link type: ${url}`);
+      })
+      .reduce((acc, { target, content }) => replaceWithContent(acc, content, target), markdown);
+  }
+  catch (e) {
+    throw new Error(`Error populating inclusions in file ${url}: ${e}`);
+  }
 }
