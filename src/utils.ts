@@ -204,18 +204,28 @@ const DEFAULT_SPACE = "-";
 /** p↓: Default-Space */
 
 /** p↓: sanitize */
-const sanitizations: [from: RegExp | string, to: string][] = [
-  [/'''/g, `"`],
-  [/''/g, `'`],
-  [/parkdown:\s+/g, ``],
-  [/p↓:\s+/g, ``],
-]
+type Replacement = [from: RegExp | string, to: string];
+
+const replacements: Record<string, Replacement[]> = {
+  static: [
+    [/'''/g, `"`],
+    [/''/g, `'`],
+    [/parkdown:\s+/g, ``],
+    [/p↓:\s+/g, ``],
+  ],
+  url: [
+    ...(Object.entries(urlCharacters.unsafe)),
+    ...(Object.entries(urlCharacters.reserved))
+  ]
+};
+
+const applyReplacement = (accumulator: string, [from, to]: Replacement) => accumulator.replaceAll(from, to);
 
 export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
-  let sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
-  sanitized = [...(Object.entries(urlCharacters.unsafe)), ...(Object.entries(urlCharacters.reserved))]
-    .map(([key, to]) => ({ from: space + key + space, to }))
-    .reduce((acc, { from, to }) => acc.replaceAll(from, to), sanitized);
-  return sanitized.replaceAll(space, " ");
+  const sanitized = replacements.static.reduce(applyReplacement, replacement)
+  return replacements.url
+    .map(([key, to]) => ([space + key + space, to] satisfies Replacement))
+    .reduce(applyReplacement, sanitized)
+    .replaceAll(space, " ");
 }
 /** p↓: sanitize */

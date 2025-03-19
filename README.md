@@ -43,7 +43,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 521 chars: 16610 -->
+<!-- p↓ length lines: 531 chars: 16773 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -253,7 +253,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 310 chars: 12107 -->
+<!-- p↓ length lines: 320 chars: 12270 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -469,7 +469,7 @@ const definitions = [
 
 [](.assets/api.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 93 chars: 4719 -->
+<!-- p↓ length lines: 103 chars: 4881 -->
 #### Query Parameters with Function-like APIs
 
 Some query parameters have more complex APIs, which are defined by a collection of typescript function singatures (limited to only `string`, `boolean`, and `number` arguments), like:
@@ -543,22 +543,32 @@ const urlCharacters = {
 
 [](src/utils.ts?region=extract(sanitize))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 18 chars: 617 -->
+<!-- p↓ length lines: 28 chars: 779 -->
 
 ```ts
-const sanitizations: [from: RegExp | string, to: string][] = [
-  [/'''/g, `"`],
-  [/''/g, `'`],
-  [/parkdown:\s+/g, ``],
-  [/p↓:\s+/g, ``],
-]
+type Replacement = [from: RegExp | string, to: string];
+
+const replacements: Record<string, Replacement[]> = {
+  static: [
+    [/'''/g, `"`],
+    [/''/g, `'`],
+    [/parkdown:\s+/g, ``],
+    [/p↓:\s+/g, ``],
+  ],
+  url: [
+    ...(Object.entries(urlCharacters.unsafe)),
+    ...(Object.entries(urlCharacters.reserved))
+  ]
+};
+
+const applyReplacement = (accumulator: string, [from, to]: Replacement) => accumulator.replaceAll(from, to);
 
 export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
-  let sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
-  sanitized = [...(Object.entries(urlCharacters.unsafe)), ...(Object.entries(urlCharacters.reserved))]
-    .map(([key, to]) => ({ from: space + key + space, to }))
-    .reduce((acc, { from, to }) => acc.replaceAll(from, to), sanitized);
-  return sanitized.replaceAll(space, " ");
+  const sanitized = replacements.static.reduce(applyReplacement, replacement)
+  return replacements.url
+    .map(([key, to]) => ([space + key + space, to] satisfies Replacement))
+    .reduce(applyReplacement, sanitized)
+    .replaceAll(space, " ");
 }
 ```
 
