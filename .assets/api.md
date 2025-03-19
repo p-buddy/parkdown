@@ -31,7 +31,7 @@ Please note the following:
 - If a method takes a string argument, and you want to include a comma within that argument, you must wrap it in one or more single quotes (e.g.`hello,-world` should be specified as `'hello,-world'`). 
 - String arguments wrapped in a single set of single quotes will automatically have the quotes removed when the query is parsed (e.g. the argument included in `[](<url>?example=method('hello,world'))` will parse to `hello,world`).
 - If you want single quotes preserved in the parsed output, use two single quotes in a row (e.g. `[](<url>?example=method(''single-quoted''))`). 
-- You cannot use double quotes within a string argument (as they are not a [URL safe character](https://support.exactonline.com/community/s/knowledge-base#All-All-DNO-Content-urlcharacters)). To include a double-quote in the parsed output, use three single quotes in a row (e.g. `[](<url>?example=method('''double-quoted'''))`).
+- You cannot use double quotes within a string argument (as they are not a [URL safe character](https://support.exactonline.com/community/s/knowledge-base#All-All-DNO-Content-urlcharacters)). To include a double-quote in the parsed output, use three single quotes in a row (e.g. `[](<url>?example=method('''double-quoted'''))`). Or use the remapping described above, like `[](<url>?example=method(-quote-double-quoted-quote-))`.
 - Optional arguments can be completely ommitted (for example if a `method` took 3 optional arguments, and you only wanted to provide the third, you could do the following: `[](<url>?example=method(,,your-third-argument))`).
 - Overall, text meant to be displayed will be _sanitized_ in the following manner (unless otherwise noted):
 

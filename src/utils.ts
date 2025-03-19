@@ -208,8 +208,8 @@ type Replacement = [from: RegExp | string, to: string];
 
 const replacements: Record<string, Replacement[]> = {
   static: [
-    [/'''/g, `"`],
-    [/''/g, `'`],
+    [`'''`, `"`],
+    [`''`, `'`],
     [/parkdown:\s+/g, ``],
     [/p↓:\s+/g, ``],
   ],
@@ -219,7 +219,8 @@ const replacements: Record<string, Replacement[]> = {
   ]
 };
 
-const applyReplacement = (accumulator: string, [from, to]: Replacement) => accumulator.replaceAll(from, to);
+const applyReplacement = (accumulator: string, [from, to]: Replacement) =>
+  accumulator.replaceAll(from, to);
 
 export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
   const sanitized = replacements.static.reduce(applyReplacement, replacement)

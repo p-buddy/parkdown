@@ -40,25 +40,48 @@ Skip the default processing behavior for the given type of file.
 
 ## `heading` 
 
-Modify the heading depth applied to included content. By default, the headings of the included content are adjusted to be one-level below their parent heading.
+Modify the heading depth applied to included content. By default, the headings of the included content are adjusted to be one-level below their parent heading (i.e. the heading the included content falls under).
 
-In the following example, the headings within the included content of `<url>` will be adjusted to one-level below the parent heading (which is an `h2` / `##`), so any `#` headings will be converted to `###` headings, and `##` headings will be converted to `####` headings, and so on.
+You might commonly see `[](<url>?heading=-1)` used to ensure that the included content's heading level is the same as it's parent heading.
 
-```md
-## Heading
-
-[](<url>)
-```
-
-The following would then ensure that the headings of the included content are at the same level as the parent heading.
+<details>
+<summary>
+See example usage:
+</summary>
+Assuming you have the following markdown files:
 
 ```md
-## Heading
-
-[](<url>?heading=-1)
+<!-- to-be-included.md -->
+# Included Heading
 ```
 
-A value of `-2` would result in the headings of the included content being at their original level (since the content is being included underneath an `h2` / `##` heading).
+```md
+<!-- README.md -->
+# Heading
+
+[](./to-be-included.md)
+```
+
+When `README.md` is processed, it will be transformed into the following:
+
+```md
+# Heading
+
+## Included Heading
+```
+
+Where the included content's heading has been modified to be one-level below the parent heading (i.e. it is converted from an `h1` / `#` heading to a `h2` / `##` heading — `h1 + 1 = h2`).
+
+If we instead wanted the included heading to remain a `h1` / `#` heading, we'd make use of the `heading` query parameter with a value of `-1` (since `h1 + 1 - 1 = h1`), like so:
+
+```md
+<!-- README.md -->
+# Heading
+
+[](./to-be-included.md?heading=-1)
+```
+
+</details>
 
 ## `inline` (Advanced)
 
@@ -68,7 +91,10 @@ Force a replacement target to be treated as [inline](#inline) content.
 
 Wrap the content of the included file in a specific kind of element.
 
-Below is the currently supported API for the `wrap` query parameter, where each defined method signature can be _invoked_ as a value for the `wrap` parameter (e.g. `[](<url>?wrap=code)`, `[](<url>?wrap=dropdown(hello-world))`).
+Below is the currently supported API for the `wrap` query parameter, where each defined method signature can be _invoked_ as a value for the `wrap` parameter, for example:
+
+- `[](<url>?wrap=code)`
+- `[](<url>?wrap=dropdown(hello-world))`
 
 [](./api-note.md?wrap=quote)
 
