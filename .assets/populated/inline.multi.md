@@ -1,5 +1,5 @@
 Before... 
-[](<url>) <!-- p▼ Begin -->
+[](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> 
+...Included Content... <!-- p↓ End --> 
 ...After

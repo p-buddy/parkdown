@@ -1,15 +1,14 @@
-# parkdown (p▼)
+# parkdown (p↓)
 
 `parkdown` allows you to include other file's content within your markdown using a link with no text (i.e. `[](<url>)`), where `<url>` corresponds to either:
   - a local file, e.g. `[](./other.md)` or `[](../root.ts)`
   - **_COMING SOON_**: An external link 
-
-Markdown renderers shouldn't display these links, but [parkdown]() can process and populate them. Also, your editor hopefully makes these links easy to navigate to, improving productivity.
+o navigate to, improving productivity.
 
 Collectively, [parkdown]() enables your documentation to behave a little more like code, and for your code to have a rightful place in your documentation.
 
 [](./.assets/invocation.md)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ## Invocation
 
 Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#populateMarkdownIncludes-export):
@@ -26,7 +25,7 @@ npx parkdown # defaults to processing inclusions in the 'README.md' file of the 
 ### `populateMarkdownIncludes` export
 
 [](.assets/code/inclusions.ts?region=replace(pkg,'''parkdown'''))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```ts
 import { populateMarkdownInclusions } from "parkdown";
 
@@ -35,11 +34,11 @@ const writeFile = true;
 
 populateMarkdownInclusions(file, writeFile);
 ```
-<!-- p▼ END -->
-<!-- p▼ END -->
+<!-- p↓ END -->
+<!-- p↓ END -->
 
 [](./.assets/authoring.md)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -57,84 +56,84 @@ There are two equivalent ways to author inline inclusions, [single-line](#single
 What you write:
 
 [](.assets/unpopulated/inline.single.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
 Before... [](<url>) ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_before_** processing, same as [Option B](#option-b-multi-line)):
 
 [](.assets/unpopulated/inline.single.md?wrap=quote&inline)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 > Before... [](<url>) ...After
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/inline.single.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
-Before... [](<url>) <!-- p▼ Begin -->
+Before... [](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> ...After
+...Included Content... <!-- p↓ End --> ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_after_** processing, same as [Option B](#option-b-multi-line)):
 
 [](.assets/populated/inline.single.md?wrap=quote&inline)
-<!-- p▼ BEGIN -->
-> Before... [](<url>) <!-- p▼ Begin -->
+<!-- p↓ BEGIN -->
+> Before... [](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> ...After
-<!-- p▼ END -->
+...Included Content... <!-- p↓ End --> ...After
+<!-- p↓ END -->
 
 #### Multi-line
 
 What you write:
 
 [](.assets/unpopulated/inline.multi.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
 Before... 
 [](<url>)
 ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_before_** processing, same as [Option A](#option-a-single-line)):
 
 [](.assets/unpopulated/inline.multi.md?wrap=quote&inline)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 > Before... 
 [](<url>)
 ...After
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/inline.multi.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
 Before... 
-[](<url>) <!-- p▼ Begin -->
+[](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> 
+...Included Content... <!-- p↓ End --> 
 ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_after_** processing, same as [Option A](#option-a-single-line)):
 
 [](.assets/populated/inline.multi.md?wrap=quote&inline)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 > Before... 
-[](<url>) <!-- p▼ Begin -->
+[](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> 
+...Included Content... <!-- p↓ End --> 
 ...After
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 ### Block
 
@@ -143,7 +142,7 @@ Block inclusions occur when your "empty" link is the **only** node in a [paragra
 What you write:
 
 [](.assets/unpopulated/block.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
 Before...
 
@@ -151,12 +150,12 @@ Before...
 
 ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_before_** processing):
 
 [](.assets/unpopulated/block.md?wrap=quote)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 <blockquote>
 
 Before...
@@ -167,47 +166,47 @@ Before...
 
 </blockquote>
 
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What your markdown file contains (**_after_** processing):
 
 [](.assets/populated/block.md?wrap=code)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```md
 Before...
 
 [](<url>)
-<!-- p▼ Begin  -->
+<!-- p↓ Begin  -->
 ...Included Content...
 ...Included Content...
-<!-- p▼ End  -->
+<!-- p↓ End  -->
 
 ...After
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 What is rendered (**_after_** processing):
 
 [](.assets/populated/block.md?wrap=quote)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 <blockquote>
 
 Before...
 
 [](<url>)
-<!-- p▼ Begin  -->
+<!-- p↓ Begin  -->
 ...Included Content...
 ...Included Content...
-<!-- p▼ End  -->
+<!-- p↓ End  -->
 
 ...After
 
 </blockquote>
 
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 [](.assets/query.md?heading=-1)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -215,7 +214,7 @@ You can pass query parameters to your inclusion links to control how their conte
 #### Processing Order
 
 [](src/include.ts?&region=extract(query))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```ts
 const params = new URLSearchParams(query);
 const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
@@ -224,7 +223,7 @@ const headingModfiier = params.get("heading") ?? 0;
 const inlineOverride = params.has("inline");
 const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 #### `region`
 
@@ -245,7 +244,7 @@ Specifiers will be searched for within the file's comments, and are expected to 
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter (e.g. `[](<url>?region=extract(some-specifier))`, `[](<url>?region=remove(some-specifier))`, `[](<url>?region=replace(some-specifier))`).
 
 [](.assets/api-note.md?wrap=quote)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 <blockquote>
 
 **_NOTE ON API USAGE:_** As you can see from the included examples, each _invocation_ of an API method looks like a less strict (more quirky) version of a typical javascript function invocation. 
@@ -254,10 +253,10 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 </blockquote>
 
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 [](src/region.ts?region=extract(definition))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```ts
 const definitions = [
   "extract(id: string, 0?: string, 1?: string, 2?: string)",
@@ -265,14 +264,14 @@ const definitions = [
   "replace(id: string, with?: string, space?: string)",
 ]
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 #### `skip`
 
 Skip the default processing behavior for the given type of file. 
 
 [](src/include.ts?wrap=dropdown(See-default-processing-behavior.)&region=extract(Default-Behavior),replace(...))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 
 <details>
 <summary>See default processing behavior.</summary>
@@ -287,7 +286,7 @@ else if (/^(js|ts)x?|svelte$/i.test(extension))
 ```
 </details>
 
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 ```md
 [](<url>?skip)
@@ -324,7 +323,7 @@ Wrap the content of the included file in a specific kind of element.
 Below is the currently supported API for the `wrap` query parameter, where each defined method signature can be _invoked_ as a value for the `wrap` parameter (e.g. `[](<url>?wrap=code)`, `[](<url>?wrap=dropdown(hello-world))`).
 
 [](.assets/api-note.md?wrap=quote)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 <blockquote>
 
 **_NOTE ON API USAGE:_** As you can see from the included examples, each _invocation_ of an API method looks like a less strict (more quirky) version of a typical javascript function invocation. 
@@ -333,10 +332,10 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 </blockquote>
 
-<!-- p▼ END -->
+<!-- p↓ END -->
 
 [](src/wrap.ts?region=extract(definition))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```ts
 const definitions = [
   /**
@@ -373,13 +372,13 @@ const definitions = [
 
 ]
 ```
-<!-- p▼ END -->
+<!-- p↓ END -->
 
-<!-- p▼ END -->
-<!-- p▼ END -->
+<!-- p↓ END -->
+<!-- p↓ END -->
 
 [](./.assets/depopulated.md)
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ## Removing populated inclusions
 
 Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#depopulateMarkdownIncludes-export):
@@ -405,7 +404,7 @@ npx parkdown -d # defaults to processing the 'README.md' file of the current wor
 ### `depopulateMarkdownIncludes` export
 
 [](.assets/code/depopulate.ts?region=replace(pkg,'''parkdown'''))
-<!-- p▼ BEGIN -->
+<!-- p↓ BEGIN -->
 ```ts
 import { depopulateMarkdownInclusions } from "parkdown";
 
@@ -414,5 +413,5 @@ const writeFile = true;
 
 depopulateMarkdownInclusions(file, writeFile);
 ```
-<!-- p▼ END -->
-<!-- p▼ END -->
+<!-- p↓ END -->
+<!-- p↓ END -->

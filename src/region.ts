@@ -3,12 +3,39 @@ import _extractComments from "extract-comments";
 import { Intervals, sanitize } from "./utils"
 import { createParser, numberedParameters, type MethodDefinition } from "./api/";
 
-/** p▼: definition */
+/** p↓: definition */
 const definitions = [
+  /**
+   * Extract regions from the retrieved content between comments that INCLUDE the specified ids.
+   * @param id The id of the comment to extract.
+   * @param 0 An optional additional id to extract.
+   * @param 1 An optional additional id to extract.
+   * @param 2 An optional additional id to extract.
+   * @example [](<url>?region=extract(specifier))
+   * @example [](<url>?region=extract(specifier,other-specifier,some-other-specifier))
+   */
   "extract(id: string, 0?: string, 1?: string, 2?: string)",
+  /**
+   * Remove regions from the retrieved content between comments that INCLUDE the specified ids.
+   * @param id The id of the comment to remove.
+   * @param 0 An optional additional id to remove.
+   * @param 1 An optional additional id to remove.
+   * @param 2 An optional additional id to remove.
+   * @example [](<url>?region=remove(specifier))
+   * @example [](<url>?region=remove(specifier,other-specifier,some-other-specifier))
+   */
   "remove(id: string, 0?: string, 1?: string, 2?: string)",
+  /**
+   * Replace regions from the retrieved content between comments that INCLUDE the specified ids.
+   * @param id The id of the comment to replace.
+   * @param with The replacement content (if ommitted, the content of the detected comment will be used).
+   * @param space The space character to use between words in the replacement content (defaults to `-`).
+   * @example [](<url>?region=replace(specifier))
+   * @example [](<url>?region=replace(specifier,new-content))
+   * @example [](<url>?region=replace(specifier,new_content,_)
+   */
   "replace(id: string, with?: string, space?: string)",
-] /** p▼: definition */ satisfies MethodDefinition[];
+] /** p↓: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
 
@@ -125,14 +152,23 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
   ).trim();;
 };
 
+const removeParkdownComments = (content: string) =>
+  removeContentWithinRegionSpecifiers(content, "p↓:", "parkdown:");
+
 export const applyRegion = (content: string, query: string) => {
   const result = parse(query);
+
   switch (result.name) {
     case "extract":
-      return extractContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      content = extractContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      break;
     case "remove":
-      return removeContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      content = removeContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      break;
     case "replace":
-      return replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
+      content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
+      break;
   }
+
+  return removeParkdownComments(content);
 }

@@ -22,7 +22,11 @@ Specifiers will be searched for within the file's comments, and are expected to 
 [](...?region=extract(some-specifier))
 ```
 
-Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter (e.g. `[](<url>?region=extract(some-specifier))`, `[](<url>?region=remove(some-specifier))`, `[](<url>?region=replace(some-specifier))`).
+Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
+
+- `[](<url>?region=extract(some-specifier))`
+- `[](<url>?region=remove(some-specifier))`
+- `[](<url>?region=replace(some-specifier,replacement-content))`
 
 [](./api-note.md?wrap=quote)
 
@@ -61,6 +65,8 @@ The following would then ensure that the headings of the included content are at
 A value of `-2` would result in the headings of the included content being at their original level (since the content is being included underneath an `h2` / `##` heading).
 
 ## `inline` (Advanced)
+
+Force a replacement target to be treated as [inline](#inline) content.
 
 ## `wrap`
 

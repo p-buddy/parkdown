@@ -26,10 +26,3 @@ export const depopulateMarkdownInclusions = (file: string, writeFile = true) => 
   if (writeFile) writeFileSync(path, result);
   return result;
 };
-
-export const remapImportSpecifiers = (file: string, writeFile = true) => {
-  const { path, markdown } = tryResolveFile(file);
-  // const result = remapImports(markdown);
-  // if (writeFile) writeFileSync(path, result);
-  // return result;
-};

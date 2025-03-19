@@ -169,16 +169,16 @@ export class Intervals {
 
 export const COMMA_NOT_IN_PARENTHESIS = /,\s*(?![^()]*\))/;
 
-/** p▼: sanitize */
+/** p↓: sanitize */
 const sanitizations: [from: RegExp | string, to: string][] = [
   [/'''/g, `"`],
   [/''/g, `'`],
   [/parkdown:\s+/g, ``],
-  [/p▼:\s+/g, ``],
+  [/p↓:\s+/g, ``],
 ]
 
 export const sanitize = (replacement: string, space: string = "-") => {
   const sanitized = sanitizations.reduce((acc, [from, to]) => acc.replaceAll(from, to), replacement)
   return space ? sanitized.replaceAll(space, " ") : sanitized;
 }
-/** p▼: sanitize */
+/** p↓: sanitize */

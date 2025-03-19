@@ -1,9 +1,9 @@
 Before...
 
 [](<url>)
-<!-- p▼ Begin  -->
+<!-- p↓ Begin  -->
 ...Included Content...
 ...Included Content...
-<!-- p▼ End  -->
+<!-- p↓ End  -->
 
 ...After

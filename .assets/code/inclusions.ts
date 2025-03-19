@@ -1,4 +1,4 @@
-import { populateMarkdownInclusions } from /** p▼: pkg */ "../../src" /** p▼: pkg */;
+import { populateMarkdownInclusions } from /** p↓: pkg */ "../../src" /** p↓: pkg */;
 
 const file = "README.md";
 const writeFile = true;

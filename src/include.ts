@@ -19,7 +19,7 @@ type CommentType = "begin" | "end";
 export const specialComment = {
   _open: "<!--" as const,
   _close: "-->" as const,
-  _flag: "p▼" as const,
+  _flag: "p↓" as const,
   get begin() { return spaced(specialComment._open, specialComment._flag, "BEGIN", specialComment._close) },
   get end() { return spaced(specialComment._open, specialComment._flag, "END", specialComment._close) },
 };
@@ -196,47 +196,47 @@ export const recursivelyPopulateInclusions = (
       if (url.startsWith("./") || url.startsWith("../")) {
         let content = getRelativePathContent(path);
 
-        /** p▼: query */
+        /** p↓: query */
         const params = new URLSearchParams(query);
-        /** p▼: query */
+        /** p↓: query */
 
-        /** p▼: query */
+        /** p↓: query */
         const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
-        /** p▼: query */
+        /** p↓: query */
         content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
 
-        /** p▼: query */
+        /** p↓: query */
         const skip = params.has("skip");
-        /** p▼: query */
+        /** p↓: query */
 
-        /** p▼: query */
+        /** p↓: query */
         const headingModfiier = params.get("heading") ?? 0;
-        /** p▼: query */
+        /** p↓: query */
 
-        /** p▼: query */
+        /** p↓: query */
         const inlineOverride = params.has("inline");
-        /** p▼: query */
+        /** p↓: query */
 
         let { inline } = target;
         if (inlineOverride) inline = true;
 
         if (!skip)
-          /** p▼: Default-Behavior */
+          /** p↓: Default-Behavior */
           if (extension === "md") {
-            /** p▼: ... */
+            /** p↓: ... */
             const getContent = extendGetRelativePathContent(getRelativePathContent, target);
             const relative = basePath ? join(basePath, dir) : dir;
             const depth = clampHeadingSum(headingDepth, Number(headingModfiier));
-            /** p▼: ... */
-            content = recursivelyPopulateInclusions(content, /** p▼: ... */ depth, getContent, relative /** p▼: ... */);
+            /** p↓: ... */
+            content = recursivelyPopulateInclusions(content, /** p↓: ... */ depth, getContent, relative /** p↓: ... */);
           }
           else if (/^(js|ts)x?|svelte$/i.test(extension))
-            content = wrap(content, "code", /** p▼: ... */ { extension, inline } /** p▼: ... */);
-        /** p▼: Default-Behavior */
+            content = wrap(content, "code", /** p↓: ... */ { extension, inline } /** p↓: ... */);
+        /** p↓: Default-Behavior */
 
-        /** p▼: query */
+        /** p↓: query */
         const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
-        /** p▼: query */
+        /** p↓: query */
         content = wraps
           ?.reduce((content, query) => wrap(content, query, { extension, inline }), content)
           ?? content;

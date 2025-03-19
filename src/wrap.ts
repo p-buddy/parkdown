@@ -1,6 +1,6 @@
 import { createParser, type MethodDefinition } from "./api/";
 
-/** p▼: definition */
+/** p↓: definition */
 const definitions = [
   /**
    * Wraps the content in a markdown-formatted code block.
@@ -34,28 +34,36 @@ const definitions = [
    */
   "dropdown(summary: string, open?: boolean, space?: string)",
 
-] /** p▼: definition */ satisfies (MethodDefinition)[];
+] /** p↓: definition */ satisfies (MethodDefinition)[];
 
-/** p▼: Default-Space */
+/** p↓: Default-Space */
 const DEFAULT_SPACE = "-";
-/** p▼: Default-Space */
+/** p↓: Default-Space */
 
 const parse = createParser(definitions);
 
+const newlinify = (content: string, count = 1) =>
+  "\n".repeat(count) + content + "\n".repeat(count);
+
+const tag = (content: string, tag: "summary" | "details" | "blockquote", attributes?: string) =>
+  `<${tag}${attributes ? ` ${attributes}` : ""}>${newlinify(content)}</${tag}>`;
+
 export const wrap = (content: string, query: string, details?: { extension: string, inline: boolean }): string => {
   const parsed = parse(query);
-  const isSingleLine = details?.inline && !content.includes("\n\n");
 
   switch (parsed.name) {
     case "code":
+      const inlineCode = !parsed.lang && !parsed.meta && details?.inline && !content.includes("\n");
+      if (inlineCode) return `\`${content}\``;
       const lang = parsed.lang ?? details?.extension ?? "";
       const meta = parsed.meta ? ` ${parsed.meta}` : "";
-      return `\`\`\`${lang}${meta}\n${content}\n\`\`\``;
+      return `\`\`\`${lang}${meta}${newlinify(content)}\`\`\``;
     case "quote":
-      return isSingleLine ? `> ${content}` : `<blockquote>\n\n${content}\n\n</blockquote>\n`;
+      return details?.inline && !content.includes("\n\n")
+        ? `> ${content}`
+        : tag(newlinify(content), "blockquote");
     case "dropdown":
-      const head = `<details${parsed.open ? " open" : ""}>`;
-      const summary = `<summary>${parsed.summary.split(parsed.space ?? DEFAULT_SPACE).join(" ")}</summary>`;
-      return ["", head, summary, "", content, "</details>", ""].join("\n");
+      const summary = tag(parsed.summary.split(parsed.space ?? DEFAULT_SPACE).join(" "), "summary");
+      return newlinify(tag([summary, content].join("\n"), "details", parsed.open ? "open" : undefined));
   }
 }

@@ -1,3 +1,3 @@
-Before... [](<url>) <!-- p▼ Begin -->
+Before... [](<url>) <!-- p↓ Begin -->
 ...Included Content...
-...Included Content... <!-- p▼ End --> ...After
+...Included Content... <!-- p↓ End --> ...After

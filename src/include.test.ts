@@ -103,16 +103,16 @@ describe(getTopLevelCommentBlocks.name, () => {
       # Main heading
 
       [](./child/README.md)
-      <!-- p▼ Begin -->
+      <!-- p↓ Begin -->
       ## Child heading
 
       [](./grandchild/README.md)
-      <!-- p▼ Begin -->
+      <!-- p↓ Begin -->
       ### Grandchild heading
 
       Hello!
-      <!-- p▼ End -->
-      <!-- p▼ End -->
+      <!-- p↓ End -->
+      <!-- p↓ End -->
 
       End
     `;
