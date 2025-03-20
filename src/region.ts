@@ -152,10 +152,33 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
   ).trim();;
 };
 
-const removeParkdownComments = (content: string) =>
-  removeContentWithinRegionSpecifiers(content, "p↓:", "parkdown:");
+const charTest = (char: string) => ({ space: char === " ", newline: char === "\n" })
 
-export const applyRegion = (content: string, query: string) => {
+export const removeAllParkdownComments = (content: string) =>
+  [
+    ...getMatchingComments(content, "p↓:"),
+    ...getMatchingComments(content, "parkdown:"),
+  ]
+    .sort((a, b) => a.range[0] - b.range[0])
+    .reverse()
+    .reduce((acc, { range: [start, end], loc: { start: { column } } }) => {
+      const remove = (left: number, right: number) =>
+        acc.slice(0, left) + acc.slice(right);
+      const is = {
+        prev: charTest(acc[start - 1]),
+        next: charTest(acc[end]),
+        startLine: column === 0,
+        final: end === acc.length,
+      };
+      const full = is.startLine && (is.next.newline || is.final);
+      if (full) return remove(start - (is.final ? 1 : 0), end + 1);
+      else if (is.startLine) return remove(start, end + (is.next.space ? 1 : 0))
+      else return remove(start - (is.prev.space ? 1 : 0), end)
+    }, content);
+
+export const applyRegion = (content: string, query?: string) => {
+  if (!query) return removeAllParkdownComments(content);
+
   const result = parse(query);
 
   switch (result.name) {
@@ -169,6 +192,6 @@ export const applyRegion = (content: string, query: string) => {
       content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
       break;
   }
-  return content;
-  //return removeParkdownComments(content);
+
+  return removeAllParkdownComments(content);
 }

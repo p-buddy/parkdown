@@ -222,8 +222,8 @@ const replacements: Record<string, Replacement[]> = {
 const applyReplacement = (accumulator: string, [from, to]: Replacement) =>
   accumulator.replaceAll(from, to);
 
-export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
-  const sanitized = replacements.static.reduce(applyReplacement, replacement)
+export const sanitize = (content: string, space: string = DEFAULT_SPACE) => {
+  const sanitized = replacements.static.reduce(applyReplacement, content)
   return replacements.url
     .map(([key, to]) => ([space + key + space, to] satisfies Replacement))
     .reduce(applyReplacement, sanitized)

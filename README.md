@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 558 chars: 17214 -->
+<!-- p↓ length lines: 572 chars: 17752 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -254,7 +254,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 347 chars: 12711 -->
+<!-- p↓ length lines: 361 chars: 13249 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -293,6 +293,8 @@ Below is the currently supported API for the `region` query parameter, where eac
 - `[](<url>?region=extract(some-specifier))`
 - `[](<url>?region=remove(some-specifier))`
 - `[](<url>?region=replace(some-specifier,replacement-content))`
+
+If no value(s) are included (e.g. `[](<url>?region)`), then simply all comments that contain `parkdown:` or `p↓:` will be stripped (as is done as a post-processing step for all other `region` functionality).
 
 [](.assets/api-note.md?wrap=quote)
 <!-- p↓ BEGIN -->
@@ -355,7 +357,7 @@ Skip the default processing behavior for the given type of file.
 
 [](src/include.ts?wrap=dropdown(See-default-processing-behavior.)&region=extract(Default-Behavior),replace(...))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 17 chars: 267 -->
+<!-- p↓ length lines: 21 chars: 525 -->
 
 <details>
 <summary>
@@ -364,11 +366,15 @@ See default processing behavior.
 
 ```ts
 if (extension === "md") {
-  ...
-  content = recursivelyPopulateInclusions(content, ...);
+ 
+  const getContent = extendGetRelativePathContent(getRelativePathContent, target);
+  const relative = basePath ? join(basePath, dir) : dir;
+  const depth = clampHeadingSum(headingDepth, Number(headingModfiier));
+ 
+  content = recursivelyPopulateInclusions(content, depth, getContent, path, relative);
 }
 else if (/^(js|ts)x?|svelte$/i.test(extension))
-  content = wrap(content, "code", ...);
+  content = wrap(content, "code", { extension, inline });
 ```
 
 </details>
@@ -420,6 +426,14 @@ If we instead wanted the included heading to remain a `h1` / `#` heading, we'd m
 # Heading
 
 [](./to-be-included.md?heading=-1)
+```
+
+which would result in the following:
+
+```md
+# Heading
+
+# Included Heading
 ```
 
 </details>
@@ -496,7 +510,7 @@ const definitions = [
 
 [](.assets/api.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 104 chars: 4981 -->
+<!-- p↓ length lines: 104 chars: 4973 -->
 #### Query Parameters with Function-like APIs
 
 Some query parameters have more complex APIs, which are defined by a collection of typescript function singatures (limited to only `string`, `boolean`, and `number` arguments), like:
@@ -570,7 +584,7 @@ const urlCharacters = {
 
 [](src/utils.ts?region=extract(sanitize))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 29 chars: 779 -->
+<!-- p↓ length lines: 29 chars: 771 -->
 
 ```ts
 type Replacement = [from: RegExp | string, to: string];
@@ -591,8 +605,8 @@ const replacements: Record<string, Replacement[]> = {
 const applyReplacement = (accumulator: string, [from, to]: Replacement) =>
   accumulator.replaceAll(from, to);
 
-export const sanitize = (replacement: string, space: string = DEFAULT_SPACE) => {
-  const sanitized = replacements.static.reduce(applyReplacement, replacement)
+export const sanitize = (content: string, space: string = DEFAULT_SPACE) => {
+  const sanitized = replacements.static.reduce(applyReplacement, content)
   return replacements.url
     .map(([key, to]) => ([space + key + space, to] satisfies Replacement))
     .reduce(applyReplacement, sanitized)

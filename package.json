@@ -2,7 +2,7 @@
 	"name": "@p-buddy/parkdown",
 	"type": "module",
 	"private": false,
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"main": "src/index.ts",
 	"bin": "src/cli.ts",
 	"files": [
@@ -28,7 +28,8 @@
 		"build:cli": "vite build --config vite.cli.config.ts",
 		"build": "pnpm run build:lib && pnpm run build:cli",
 		"test": "vitest",
-		"test:run": "vitest run"
+		"test:run": "vitest run",
+		"cli": "npx tsx src/cli.ts"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",

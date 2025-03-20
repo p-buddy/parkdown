@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { dedent } from "ts-dedent";
-import { extractContentWithinRegionSpecifiers, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier } from "./region";
+import { extractContentWithinRegionSpecifiers, removeAllParkdownComments, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier } from "./region";
 
 describe(extractContentWithinRegionSpecifiers.name, () => {
   test("basic", () => {
@@ -142,4 +142,63 @@ describe(replaceContentWithinRegionSpecifier.name, () => {
     const result = replaceContentWithinRegionSpecifier(code, "...");
     expect(result).toEqual("func('hello', 'world', ...)");
   })
-})  
+});
+
+
+describe(removeAllParkdownComments.name, () => {
+  test("block", () => {
+    const code = dedent`
+      /* p↓: */
+      Hello
+      /* p↓: */
+    `
+    expect(removeAllParkdownComments(code)).toBe("Hello")
+  });
+
+  test("line", () => {
+    const code = "/* p↓: */ Hello /* p↓: */"
+    expect(removeAllParkdownComments(code)).toBe("Hello")
+  })
+
+  test("mixed 1", () => {
+    const code = dedent`
+      Hello /* p↓: */ Hello /** p↓: **/ Hello
+      Hello
+      /* p↓: */
+      Hello
+      /* p↓: */`;
+    expect(removeAllParkdownComments(code)).toBe(dedent`
+      Hello Hello Hello
+      Hello
+      Hello
+    `);
+  });
+
+  test("mixed 2", () => {
+    const code = dedent`
+      /* p↓: */
+      Hello
+      /* p↓: */
+      Hello /* p↓: */ Hello /** p↓: **/ Hello
+      Hello`;
+    expect(removeAllParkdownComments(code)).toBe(dedent`
+      Hello
+      Hello Hello Hello
+      Hello
+    `);
+  })
+
+  test("mixed 3", () => {
+    const code = dedent`
+      // p↓:
+      Hello
+      // p↓:
+      Hello /* p↓: */ Hello /** p↓: **/ Hello
+      Hello`;
+    expect(removeAllParkdownComments(code)).toBe(dedent`
+      Hello
+      Hello Hello Hello
+      Hello
+    `);
+  })
+})

@@ -24,6 +24,8 @@ Below is the currently supported API for the `region` query parameter, where eac
 - `[](<url>?region=remove(some-specifier))`
 - `[](<url>?region=replace(some-specifier,replacement-content))`
 
+If no value(s) are included (e.g. `[](<url>?region)`), then simply all comments that contain `parkdown:` or `p↓:` will be stripped (as is done as a post-processing step for all other `region` functionality).
+
 [](./api-note.md?wrap=quote)
 
 [](../src/region.ts?region=extract(definition))
@@ -79,6 +81,14 @@ If we instead wanted the included heading to remain a `h1` / `#` heading, we'd m
 # Heading
 
 [](./to-be-included.md?heading=-1)
+```
+
+which would result in the following:
+
+```md
+# Heading
+
+# Included Heading
 ```
 
 </details>
