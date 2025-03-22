@@ -185,7 +185,7 @@ export const recursivelyPopulateInclusions = (
   markdown: string,
   headingDepth: number,
   getRelativePathContent: GetRelativePathContent,
-  url: string,
+  url?: string,
   basePath?: string
 ) => {
   try {
@@ -262,6 +262,6 @@ export const recursivelyPopulateInclusions = (
       .reduce((acc, { target, content }) => replaceWithContent(acc, content, target), markdown);
   }
   catch (e) {
-    throw new Error(`Error populating inclusions in file ${url}: ${e}`);
+    throw new Error(`Error populating inclusions in file ${url ?? "(unknown)"}: ${e}`);
   }
 }

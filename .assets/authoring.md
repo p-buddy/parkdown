@@ -8,6 +8,8 @@ These links can be rendered either [inline](#inline) or [block](#block), dependi
 
 Inline inclusions occur when your _text-less_ link has 1 or more siblings (meaning it's **not** the only node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1)).
 
+> **CAUTION:** [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) will not protect you from authoring inline inclusions that should actually be [block](#block) inclusions to be valid markdown.
+
 There are two equivalent ways to author inline inclusions, [single-line](#single-line) or [multi-line](#multi-line), and which you choose depends solely on how you want your raw markdown to look (it will **not** affect the rendered output).
 
 ### Single-line

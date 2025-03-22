@@ -1,7 +1,7 @@
 import { dedent } from "ts-dedent";
-import _extractComments from "extract-comments";
 import { Intervals, sanitize } from "./utils"
 import { createParser, numberedParameters, type MethodDefinition } from "./api/";
+import { extractComments, type ExtractedComment } from "./extract";
 
 /** p↓: definition */
 const definitions = [
@@ -38,19 +38,6 @@ const definitions = [
 ] /** p↓: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
-
-type ExtractedComment = {
-  type: 'BlockComment' | 'LineComment',
-  value: string,
-  range: [number, number],
-  loc: {
-    start: { line: number, column: number },
-    end: { line: number, column: number },
-  },
-  raw: string,
-};
-
-const extractComments = (content: string) => (_extractComments as any)(content) as ExtractedComment[];
 
 const getMatchingComments = (content: string, specifier: string) => extractComments(content)
   .filter(({ value }) => value.includes(specifier))
@@ -152,7 +139,7 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
   ).trim();;
 };
 
-const charTest = (char: string) => ({ space: char === " ", newline: char === "\n" })
+const charTest = (char?: string) => ({ isSpace: char === " ", isNewline: char === "\n" || char === undefined })
 
 export const removeAllParkdownComments = (content: string) =>
   [
@@ -161,19 +148,15 @@ export const removeAllParkdownComments = (content: string) =>
   ]
     .sort((a, b) => a.range[0] - b.range[0])
     .reverse()
-    .reduce((acc, { range: [start, end], loc: { start: { column } } }) => {
+    .reduce((acc, { range: [start, end], value }) => {
       const remove = (left: number, right: number) =>
         acc.slice(0, left) + acc.slice(right);
-      const is = {
-        prev: charTest(acc[start - 1]),
-        next: charTest(acc[end]),
-        startLine: column === 0,
-        final: end === acc.length,
-      };
-      const full = is.startLine && (is.next.newline || is.final);
-      if (full) return remove(start - (is.final ? 1 : 0), end + 1);
-      else if (is.startLine) return remove(start, end + (is.next.space ? 1 : 0))
-      else return remove(start - (is.prev.space ? 1 : 0), end)
+      const prev = charTest(acc[start - 1]);
+      const next = charTest(acc[end]);
+      const last = end === acc.length;
+      if (prev.isNewline && next.isNewline) return remove(start - (last ? 1 : 0), end + 1);
+      else if (prev.isNewline) return remove(start, end + (next.isSpace ? 1 : 0))
+      else return remove(start - (prev.isSpace ? 1 : 0), end)
     }, content);
 
 export const applyRegion = (content: string, query?: string) => {

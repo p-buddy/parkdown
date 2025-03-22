@@ -1,7 +1,6 @@
 import { unified, type Plugin } from 'unified';
 import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
-import hash from 'stable-hash';
 
 export type AstRoot = typeof remarkParse extends Plugin<any, any, infer Root>
 /**/ ? Root
@@ -33,15 +32,14 @@ export const parse = {
 } as const;
 
 export const getAllPositionNodes = <T extends NodeType>(ast: AstRoot, type?: T) => {
-  type Node = SpecificNode<T> & HasPosition & { parentID: string; siblingIndex: number; siblingCount: number };
+  type Node = SpecificNode<T> & HasPosition & { siblingIndex: number; siblingCount: number };
   const nodes: Node[] = [];
   visit(ast, (node, siblingIndex, parent) => {
     if (node.type === "root") return;
     else if (type && node.type !== type) return;
     else if (hasPosition(node)) {
-      const parentID = hash(parent);
       const siblingCount = (parent?.children.length ?? 0) - 1;
-      nodes.push({ ...node, parentID, siblingIndex, siblingCount } as Node);
+      nodes.push({ ...node, siblingIndex, siblingCount } as Node);
     }
   });
   return nodes;

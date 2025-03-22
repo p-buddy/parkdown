@@ -98,21 +98,21 @@ describe('applyHeadingDepth', () => {
 });
 
 describe(getTopLevelCommentBlocks.name, () => {
-  test("problematic case", () => {
+  test("basic", () => {
     const content = dedent`
       # Main heading
 
       [](./child/README.md)
-      <!-- p↓ Begin -->
+      <!-- p↓ BEGIN -->
       ## Child heading
 
       [](./grandchild/README.md)
-      <!-- p↓ Begin -->
+      <!-- p↓ BEGIN -->
       ### Grandchild heading
 
       Hello!
-      <!-- p↓ End -->
-      <!-- p↓ End -->
+      <!-- p↓ END -->
+      <!-- p↓ END -->
 
       End
     `;
@@ -178,9 +178,8 @@ describe(recursivelyPopulateInclusions.name, () => {
 
       [](./child/README.md)
       ${specialComment.begin}
-      ## Child heading
-
-      End child
+      ${specialComment.lengthOf("#" + filesystem.getFileFromAbsolutePath("child/README.md"))}
+      ${"#" + filesystem.getFileFromAbsolutePath("child/README.md")}
       ${specialComment.end}
 
       End parent
@@ -228,7 +227,7 @@ describe(recursivelyPopulateInclusions.name, () => {
       "README.md": dedent`
         # Main heading
 
-        [](./child/file.ts?boundary=boundary)
+        [](./child/file.ts?region=extract(boundary))
 
         End
       `,
@@ -246,14 +245,22 @@ describe(recursivelyPopulateInclusions.name, () => {
     const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
 
     const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    const includedCode = `
+\`\`\`ts
+const x = 5;
+\`\`\`
+`;
     expect(result).toBe(dedent`
       # Main heading
 
-      [](./child/file.ts?boundary=boundary)
+      [](./child/file.ts?region=extract(boundary))
       ${specialComment.begin}
+      ${specialComment.lengthOf(includedCode)}
+
       \`\`\`ts
       const x = 5;
       \`\`\`
+
       ${specialComment.end}
       
       End`
@@ -265,7 +272,7 @@ describe(recursivelyPopulateInclusions.name, () => {
       "README.md": dedent`
         # Main heading
 
-        [](./child/README.md?tag=dropdown('Open-me,-please!'))
+        [](./child/README.md?wrap=dropdown('Open-me,-please!'))
       `,
       child: {
         "README.md": dedent`
@@ -277,18 +284,24 @@ describe(recursivelyPopulateInclusions.name, () => {
     const fromRoot = (path: string) => filesystem.getFileFromAbsolutePath(join("", path));
 
     const result = recursivelyPopulateInclusions(filesystem.getFileFromAbsolutePath("README.md"), 0, fromRoot);
+    const expectedDropdown =
+      "\n" +
+      dedent`
+        <details>
+        <summary>
+        Open me, please!
+        </summary>
+        Hello!
+        </details>
+      ` +
+      "\n";
     expect(result).toBe(dedent`
       # Main heading
 
-      [](./child/README.md?tag=dropdown('Open-me,-please!'))
+      [](./child/README.md?wrap=dropdown('Open-me,-please!'))
       ${specialComment.begin}
-
-      <details>
-      <summary>Open me, please!</summary>
-      
-      Hello!
-      </details>
-
+      ${specialComment.lengthOf(expectedDropdown)}
+      ${expectedDropdown}
       ${specialComment.end}`
     );
   })

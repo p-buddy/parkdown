@@ -148,15 +148,15 @@ describe(replaceContentWithinRegionSpecifier.name, () => {
 describe(removeAllParkdownComments.name, () => {
   test("block", () => {
     const code = dedent`
-      /* p↓: */
+      /* p↓: block start */
       Hello
-      /* p↓: */
+      /* p↓: block end */
     `
     expect(removeAllParkdownComments(code)).toBe("Hello")
   });
 
   test("line", () => {
-    const code = "/* p↓: */ Hello /* p↓: */"
+    const code = "/* p↓: line start */ Hello /* p↓: line end */"
     expect(removeAllParkdownComments(code)).toBe("Hello")
   })
 
@@ -202,3 +202,4 @@ describe(removeAllParkdownComments.name, () => {
     `);
   })
 })
+
