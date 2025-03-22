@@ -159,7 +159,7 @@ export const removeAllParkdownComments = (content: string) =>
       else return remove(start - (prev.isSpace ? 1 : 0), end)
     }, content);
 
-export const applyRegion = (content: string, query?: string) => {
+export const applyRegion = (content: string, query?: string, isLast?: boolean) => {
   if (!query) return removeAllParkdownComments(content);
 
   const result = parse(query);
@@ -176,5 +176,5 @@ export const applyRegion = (content: string, query?: string) => {
       break;
   }
 
-  return removeAllParkdownComments(content);
+  return isLast ? removeAllParkdownComments(content) : content;
 }
