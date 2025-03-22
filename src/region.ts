@@ -1,7 +1,8 @@
 import { dedent } from "ts-dedent";
-import _extractComments from "extract-comments";
 import { Intervals, sanitize } from "./utils"
 import { createParser, numberedParameters, type MethodDefinition } from "./api/";
+import _extract from "extract-comments";
+import _extract2 from "multilang-extract-comments";
 
 /** p↓: definition */
 const definitions = [
@@ -39,29 +40,84 @@ const definitions = [
 
 const parse = createParser(definitions);
 
+type ExtractionTask = {
+  extension: string,
+  content: string,
+}
+
+/**  https://github.com/jonschlinkert/extract-comments format */
 type ExtractedComment = {
-  type: 'BlockComment' | 'LineComment',
-  value: string,
   range: [number, number],
+  value: string,
   loc: {
     start: { line: number, column: number },
     end: { line: number, column: number },
   },
-  raw: string,
 };
 
-const extractComments = (content: string) => (_extractComments as any)(content) as ExtractedComment[];
+/** https://www.npmjs.com/package/multilang-extract-comments format */
+type ExtractReturn = Record<string, Record<"begin" | "end", number> & {
+  content: string,
+}>;
 
-const getMatchingComments = (content: string, specifier: string) => extractComments(content)
+export const remapExtractedComments = (extracted: ExtractReturn, content: string): ExtractedComment[] =>
+  Object.entries(extracted).map(([_, item]) => {
+    console.log(item);
+    const { begin, end, content: value } = item;
+    const preamble = content.slice(0, begin);
+    const full = content.slice(0, end);
+
+    const preSplit = preamble.split("\n");
+    const fullSplit = full.split("\n");
+
+    const startColumn = preamble.length - preSplit.at(-1).length;
+    const endColumn = full.length - fullSplit.at(-1).length;
+
+    return {
+      value,
+      range: [begin, end],
+      loc: {
+        start: { line: preSplit.length, column: startColumn },
+        end: { line: fullSplit.length, column: endColumn },
+      },
+    };
+  });
+
+export const extractComments = ({ extension, content }: ExtractionTask) => {
+  switch (extension) {
+    case "js":
+    case "ts":
+    case "md":
+      // change to use _extract
+      return _extract(content) as ExtractedComment[];
+    case "svelte":
+      // change to use both _extract and _extract2
+      const set = new Set<string>();
+      return [
+        /** multi-pass */
+        ..._extract(content) as ExtractedComment[],
+        ...remapExtractedComments(_extract2(content, { filename: `dummy.js` }), content),
+        ...remapExtractedComments(_extract2(content, { filename: `dummy.html` }), content),
+      ].filter(({ range: [start, end] }) => {
+        const key = `${start}-${end}`;
+        return set.has(key) ? false : Boolean(set.add(key));
+      });
+    default:
+      throw new Error(`Unsupported extension: ${extension}`);
+  }
+};
+
+export const getMatchingComments = (task: ExtractionTask, specifier: string) => extractComments(task)
   .filter(({ value }) => value.includes(specifier))
   .sort((a, b) => a.range[0] - b.range[0]);
 
-export const extractContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
+export const extractContentWithinRegionSpecifiers = (task: ExtractionTask, ...specifiers: string[]) => {
+  let { content } = task;
   if (specifiers.length === 0) return content;
 
   const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
 
-  const comments = extractComments(content);
+  const comments = extractComments(task);
 
   const extraction = new Intervals();
   const markers = new Intervals();
@@ -90,11 +146,12 @@ export const extractContentWithinRegionSpecifiers = (content: string, ...specifi
   ).trim();
 };
 
-export const removeContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
+export const removeContentWithinRegionSpecifiers = (task: ExtractionTask, ...specifiers: string[]) => {
+  let { content } = task;
   if (specifiers.length === 0) return content;
 
   const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
-  const comments = extractComments(content);
+  const comments = extractComments(task);
 
   const markers = new Intervals();
 
@@ -122,10 +179,11 @@ export const removeContentWithinRegionSpecifiers = (content: string, ...specifie
   ).trim();
 };
 
-export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string) => {
+export const replaceContentWithinRegionSpecifier = (task: ExtractionTask, specifier: string, replacement?: string, space?: string) => {
+  let { content } = task;
   if (!specifier) return content;
 
-  const matching = getMatchingComments(content, specifier);
+  const matching = getMatchingComments(task, specifier);
 
   if (matching.length < 2) return content;
 
@@ -143,7 +201,7 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
   const fullContent = new Intervals();
   fullContent.push(0, result.length);
   fullContent.subtract(
-    getMatchingComments(result, specifier)
+    getMatchingComments({ ...task, content: result }, specifier)
       .reduce((acc, { range }) => (acc.push(...range), acc), new Intervals())
   );
 
@@ -154,10 +212,10 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
 
 const charTest = (char: string) => ({ space: char === " ", newline: char === "\n" })
 
-export const removeAllParkdownComments = (content: string) =>
+export const removeAllParkdownComments = (task: ExtractionTask) =>
   [
-    ...getMatchingComments(content, "p↓:"),
-    ...getMatchingComments(content, "parkdown:"),
+    ...getMatchingComments(task, "p↓:"),
+    ...getMatchingComments(task, "parkdown:"),
   ]
     .sort((a, b) => a.range[0] - b.range[0])
     .reverse()
@@ -174,24 +232,25 @@ export const removeAllParkdownComments = (content: string) =>
       if (full) return remove(start - (is.final ? 1 : 0), end + 1);
       else if (is.startLine) return remove(start, end + (is.next.space ? 1 : 0))
       else return remove(start - (is.prev.space ? 1 : 0), end)
-    }, content);
+    }, task.content);
 
-export const applyRegion = (content: string, query?: string) => {
-  if (!query) return removeAllParkdownComments(content);
+export const applyRegion = (task: ExtractionTask & { query?: string }) => {
+  let { content, query } = task;
+  if (!query) return removeAllParkdownComments(task);
 
-  const result = parse(query);
+  const result = parse(task.query);
 
   switch (result.name) {
     case "extract":
-      content = extractContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      content = extractContentWithinRegionSpecifiers(task, result.id, ...numberedParameters(result));
       break;
     case "remove":
-      content = removeContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      content = removeContentWithinRegionSpecifiers(task, result.id, ...numberedParameters(result));
       break;
     case "replace":
-      content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
+      content = replaceContentWithinRegionSpecifier(task, result.id, result.with, result.space);
       break;
   }
 
-  return removeAllParkdownComments(content);
+  return removeAllParkdownComments({ ...task, content });
 }

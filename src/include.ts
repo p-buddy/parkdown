@@ -214,7 +214,11 @@ export const recursivelyPopulateInclusions = (
           /** p↓: query */
           const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
           /** p↓: query */
-          content = regions?.reduce((content, region) => applyRegion(content, region), content) ?? content;
+          content = regions
+            ?.reduce((content, query) =>
+              applyRegion({ extension, content, query }),
+              content)
+            ?? content;
 
           /** p↓: query */
           const skip = params.has("skip");

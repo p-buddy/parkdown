@@ -8,18 +8,27 @@ importers:
 
   .:
     dependencies:
+      '@commander-js/extra-typings':
+        specifier: ^13.1.0
+        version: 13.1.0(commander@13.1.0)
       '@flex-development/import-regex':
         specifier: ^3.0.0
         version: 3.0.0
       extract-comments:
         specifier: ^1.1.0
         version: 1.1.0
+      multilang-extract-comments:
+        specifier: ^0.4.0
+        version: 0.4.0
       remark-parse:
         specifier: ^11.0.0
         version: 11.0.0
       stable-hash:
         specifier: ^0.0.4
         version: 0.0.4
+      ts-dedent:
+        specifier: ^2.2.0
+        version: 2.2.0
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -27,18 +36,12 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
     devDependencies:
-      '@commander-js/extra-typings':
-        specifier: ^13.1.0
-        version: 13.1.0(commander@13.1.0)
       '@types/node':
         specifier: ^22.13.10
         version: 22.13.10
       '@types/unist':
         specifier: ^3.0.3
         version: 3.0.3
-      ts-dedent:
-        specifier: ^2.2.0
-        version: 2.2.0
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
@@ -522,6 +525,9 @@ packages:
     resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
     engines: {node: '>=18'}
 
+  comment-patterns@0.12.2:
+    resolution: {integrity: sha512-yA1FeubMSK0MXzapPm1uNdxyGk0mTAn5qrsVS6uQUSDOpUgWVLCqsgZfA/lhRx6TCLr1MvxeRqXOb1peWXWg3Q==}
+
   compare-versions@6.1.1:
     resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
 
@@ -655,6 +661,9 @@ packages:
   kolorist@1.8.0:
     resolution: {integrity: sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ==}
 
+  line-counter@1.1.0:
+    resolution: {integrity: sha512-6bmXJG/pOX5HBb2aIJZrI9CALBgY1VMbS0GPuXfJaT13UEfee/2xxPCsOOJdXLl3KPRyBf2/D+cjiG8hU9S7LA==}
+
   local-pkg@1.1.1:
     resolution: {integrity: sha512-WunYko2W1NcdfAFpuLUoucsgULmgDBRkdxHxWQ7mK0cQqwPiy8E1enjuRBrhLtZkB5iScJ1XIPdhVEFK8aOLSg==}
     engines: {node: '>=14'}
@@ -757,6 +766,9 @@ packages:
   muggle-string@0.4.1:
     resolution: {integrity: sha512-VNTrAak/KhO2i8dqqnqnAHOa3cYBwXEZe9h+D5h/1ZqFSTEFHdM65lR7RoIqq3tBBYavsOXV84NoHXZ0AkPyqQ==}
 
+  multilang-extract-comments@0.4.0:
+    resolution: {integrity: sha512-8mXCo9Q42Wyfho9nn7hHkG/0sKxH0nJWfmBLl8+c+FLv++XhFkFC1sntOk4NFZ+nSpoMjlF/8ILeOLyMRTFbIw==}
+
   nanoid@3.3.9:
     resolution: {integrity: sha512-SppoicMGpZvbF1l3z4x7No3OlIjP7QJvC9XR7AhZr1kL133KHnKPztkKDc+Ir4aJ/1VhTySrtKhrsycmrMQfvg==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -802,6 +814,9 @@ packages:
 
   quansync@0.2.8:
     resolution: {integrity: sha512-4+saucphJMazjt7iOM27mbFCk+D9dd/zmgMDCzRZ8MEoBfYp7lAvoN38et/phRQF6wOPMy/OROBGgoWeSKyluA==}
+
+  quotemeta@0.0.0:
+    resolution: {integrity: sha512-1XGObUh7RN5b58vKuAsrlfqT+Rc4vmw8N4pP9gFCq1GFlTdV0Ex/D2Ro1Drvrqj++HPi3ig0Np17XPslELeMRA==}
 
   remark-parse@11.0.0:
     resolution: {integrity: sha512-FCxlKLNGknS5ba/1lmpYijMUzX2esxW5xQqjWxw2eHFfS2MSdaHVINFmhjo+qN1WhZhNimq0dZATN9pH0IDrpA==}
@@ -1429,6 +1444,10 @@ snapshots:
 
   commander@13.1.0: {}
 
+  comment-patterns@0.12.2:
+    dependencies:
+      lodash: 4.17.21
+
   compare-versions@6.1.1: {}
 
   concat-map@0.0.1: {}
@@ -1552,6 +1571,8 @@ snapshots:
       graceful-fs: 4.2.11
 
   kolorist@1.8.0: {}
+
+  line-counter@1.1.0: {}
 
   local-pkg@1.1.1:
     dependencies:
@@ -1744,6 +1765,13 @@ snapshots:
 
   muggle-string@0.4.1: {}
 
+  multilang-extract-comments@0.4.0:
+    dependencies:
+      comment-patterns: 0.12.2
+      line-counter: 1.1.0
+      lodash: 4.17.21
+      quotemeta: 0.0.0
+
   nanoid@3.3.9: {}
 
   parse-code-context@1.0.0: {}
@@ -1781,6 +1809,8 @@ snapshots:
   punycode@2.3.1: {}
 
   quansync@0.2.8: {}
+
+  quotemeta@0.0.0: {}
 
   remark-parse@11.0.0:
     dependencies:
