@@ -42,8 +42,6 @@
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "^13.1.0",
-		"@flex-development/import-regex": "^3.0.0",
-		"extract-comments": "^1.1.0",
 		"remark-parse": "^11.0.0",
 		"ts-dedent": "^2.2.0",
 		"unified": "^11.0.5",

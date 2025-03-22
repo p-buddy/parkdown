@@ -9,7 +9,6 @@ const program = new Command()
   .option('--ni, --no-inclusions', 'Do NOT process file inclusions (defaults to false)', false as boolean)
   .option('-d, --depopulate', 'Remove populated inclusions from the file', false as boolean)
   .option('-f, --file <flag>', 'The file(s) to process', (value, arr) => (arr.push(value), arr), new Array<string>())
-  .option('-r, --remap-imports', 'Remap import specifiers in code blocks from one destination to another')
   .parse();
 
 const { inclusions: noInclusions, depopulate, file, write: noWrite } = program.opts();
