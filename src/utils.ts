@@ -199,6 +199,7 @@ const urlCharacters = {
     ["square"]: "[",
     ["unsquare"]: "]",
     ["tick"]: "`",
+    ["line"]: "\n",
   }
 }
 /** p↓: url */

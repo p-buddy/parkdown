@@ -14,10 +14,12 @@ const definitions = [
 
 const parse = createParser(definitions);
 
+export const sortComment = (a: ExtractedComment, b: ExtractedComment) => a.range[0] - b.range[0];
+
 export const getMatchingComments = (content: string, specifier: string, comments?: ExtractedComment[]) =>
   (comments ?? extractComments(content))
     .filter(({ value }) => value.includes(specifier))
-    .sort((a, b) => a.range[0] - b.range[0]);
+    .sort(sortComment);
 
 const charTest = (char?: string) => ({
   isSpace: char === " ",
@@ -47,6 +49,12 @@ export const getSearchParams = (text: string) => queryMatchers
   .filter(Boolean)
   .map(match => new URLSearchParams(match))[0]
 
+/**
+ * NOTE: Currently not used/needed.
+ * @param content 
+ * @param specifier_s 
+ * @returns 
+ */
 export const applyCommentQueriesFirstPass = (content: string, specifier_s: (string[]) | string) =>
   (
     Array.isArray(specifier_s)

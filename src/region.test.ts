@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { dedent } from "ts-dedent";
-import { extractContentWithinRegionSpecifiers, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier } from "./region";
+import { extractContentWithinRegionSpecifiers, remapContentWithinRegionSpecifier, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier, spliceContentAroundRegionSpecifier } from "./region";
 
 describe(extractContentWithinRegionSpecifiers.name, () => {
   test("basic", () => {
@@ -142,15 +142,58 @@ describe(replaceContentWithinRegionSpecifier.name, () => {
     const result = replaceContentWithinRegionSpecifier(code, "...");
     expect(result).toEqual("func('hello', 'world', ...)");
   })
+});
 
-  test("expand", () => {
+describe(spliceContentAroundRegionSpecifier.name, () => {
+  test("basic", () => {
     const code = dedent`
-      hi /* id */ hello /* id */ hi
+      /* id */ hello /* id */
     `;
-    expect(replaceContentWithinRegionSpecifier(code, "id", "world")).toEqual("hi world hi");
-    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, 1)).toEqual("hiworld hi");
-    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, undefined, 1)).toEqual("hi worldhi");
-    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, 1, 1)).toEqual("hiworldhi");
+
+    expect(
+      spliceContentAroundRegionSpecifier(code, "id", undefined, "world")
+    ).toEqual("world" + code);
+    expect(
+      spliceContentAroundRegionSpecifier(code, "id", 0, "world")
+    ).toEqual(code + "world");
+
+    // Check clamping
+    expect(
+      spliceContentAroundRegionSpecifier(code, "id", -1, "world")
+    ).toEqual("world" + code);
+    expect(
+      spliceContentAroundRegionSpecifier(code, "id", 1, "world")
+    ).toEqual(code + "world");
+
+    expect(
+      spliceContentAroundRegionSpecifier("xxx" + code, "id", -3)
+    ).toEqual(code);
+
+    expect(
+      spliceContentAroundRegionSpecifier(code + "xxx", "id", 3)
+    ).toEqual(code);
+  })
+});
+
+describe(remapContentWithinRegionSpecifier.name, () => {
+  test("basic", () => {
+    const code = dedent`
+      /* id */
+      hello
+      /* id */
+    `;
+
+    expect(
+      remapContentWithinRegionSpecifier(code, "id", "hello", "world")
+    ).toEqual(code.replace("hello", "world"));
+
+    expect(
+      remapContentWithinRegionSpecifier(code, "id", "\n", " ")
+    ).toEqual("/* id */ hello /* id */");
+
+    expect(
+      remapContentWithinRegionSpecifier(code, "id", "-line-", "-")
+    ).toEqual("/* id */ hello /* id */");
   })
 
 });
