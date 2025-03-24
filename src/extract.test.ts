@@ -11,7 +11,7 @@ describe(extractComments.name, () => {
       remove!
       /* A */
     </script>
-    <Component prop={/* B */ async () => {
+    <Component prop={/* p:?=1 B */ async () => {
       /* B */
     }}>
       <!-- C -->

@@ -107,6 +107,12 @@ export const removeQueryParams = (path: string) => seperateQueryParams(path)[0];
 export class Intervals {
   private intervals: Array<[number, number]> = [];
 
+  constructor(...ranges: Array<[number, number]>) {
+    for (const [start, end] of ranges) {
+      this.push(start, end);
+    }
+  }
+
   push(start: number, end: number) {
     this.intervals.push([Math.min(start, end), Math.max(start, end)]);
   }

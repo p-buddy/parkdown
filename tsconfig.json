@@ -3,6 +3,7 @@
     "module": "Preserve",
     "moduleResolution": "bundler",
     "target": "ESNext",
+    "strictBindCallApply": true,
     "lib": [
       "ESNext"
     ]

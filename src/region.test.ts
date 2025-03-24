@@ -142,4 +142,15 @@ describe(replaceContentWithinRegionSpecifier.name, () => {
     const result = replaceContentWithinRegionSpecifier(code, "...");
     expect(result).toEqual("func('hello', 'world', ...)");
   })
+
+  test("expand", () => {
+    const code = dedent`
+      hi /* id */ hello /* id */ hi
+    `;
+    expect(replaceContentWithinRegionSpecifier(code, "id", "world")).toEqual("hi world hi");
+    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, 1)).toEqual("hiworld hi");
+    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, undefined, 1)).toEqual("hi worldhi");
+    expect(replaceContentWithinRegionSpecifier(code, "id", "world", undefined, 1, 1)).toEqual("hiworldhi");
+  })
+
 });

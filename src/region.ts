@@ -31,11 +31,13 @@ const definitions = [
    * @param id The id of the comment to replace.
    * @param with The replacement content (if ommitted, the content of the detected comment will be used).
    * @param space The space character to use between words in the replacement content (defaults to `-`).
+   * @param expandLeft ADVANCED: The number of characters to expand the left side of the comment.
+   * @param expandRight ADVANCED: The number of characters to expand the right side of the comment.
    * @example [](<url>?region=replace(specifier))
    * @example [](<url>?region=replace(specifier,new-content))
    * @example [](<url>?region=replace(specifier,new_content,_)
    */
-  "replace(id: string, with?: string, space?: string)",
+  "replace(id: string, with?: string, space?: string, expandLeft?: number, expandRight?: number)",
 ] /** p↓: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
@@ -105,7 +107,31 @@ export const removeContentWithinRegionSpecifiers = (content: string, ...specifie
   ).trim();
 };
 
-export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string) => {
+const getMatchingCommentPairs = (content: string, specifier: string) => {
+  const matching = getMatchingComments(content, specifier);
+  const pairs: [ExtractedComment, ExtractedComment][] = [];
+  for (let i = 0; i < matching.length - 1; i += 2)
+    pairs.push([matching[i], matching[i + 1]]);
+  return pairs;
+}
+
+type CommentPair = ReturnType<typeof getMatchingCommentPairs>[number];
+
+const applyExpansion = (expandLeft: number, expandRight: number, pair: CommentPair) => {
+  const [open, close] = pair;
+  if (expandLeft) open.range[0] -= expandLeft;
+  if (expandRight) close.range[1] += expandRight;
+  return pair;
+}
+
+export const replaceContentWithinRegionSpecifier = (
+  content: string,
+  specifier: string,
+  replacement?: string,
+  space?: string,
+  expandLeft?: number,
+  expandRight?: number
+) => {
   if (!specifier) return content;
 
   content = applyCommentQueriesFirstPass(content, specifier);
@@ -116,9 +142,10 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
 
   let result = '';
   let lastEnd = 0;
-  for (let i = 0; i < matching.length - 1; i += 2) {
-    const open = matching[i];
-    const close = matching[i + 1];
+
+  const expand = applyExpansion.bind(null, expandLeft, expandRight);
+
+  for (const [open, close] of getMatchingCommentPairs(content, specifier).map(expand)) {
     result += content.slice(lastEnd, open.range[1]);
     result += sanitize(replacement ?? open.value, space);
     lastEnd = close.range[0];
@@ -127,10 +154,12 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
 
   const fullContent = new Intervals();
   fullContent.push(0, result.length);
-  fullContent.subtract(
-    getMatchingComments(result, specifier)
-      .reduce((acc, { range }) => (acc.push(...range), acc), new Intervals())
-  );
+
+  fullContent.subtract(new Intervals(
+    ...getMatchingCommentPairs(result, specifier)
+      .map(expand)
+      .flatMap(([open, close]) => [open.range, close.range])
+  ));
 
   return dedent(
     fullContent.collapse().map(([start, end]) => result.slice(start, end)).filter(Boolean).join("")
@@ -150,7 +179,8 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
       content = removeContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
       break;
     case "replace":
-      content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
+      const { with: _with, id, space, expandLeft, expandRight } = result;
+      content = replaceContentWithinRegionSpecifier(content, id, _with, space, expandLeft, expandRight);
       break;
   }
 
