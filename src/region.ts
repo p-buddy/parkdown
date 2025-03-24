@@ -210,6 +210,9 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
     case "splice":
       content = spliceContentAroundRegionSpecifier(content, result.id, result.deleteCount, result.insert, result.space);
       break;
+    case "remap":
+      content = remapContentWithinRegionSpecifier(content, result.id, result.from, result.to, result.space);
+      break;
   }
 
   return isLast ? removeAllParkdownComments(content) : content;

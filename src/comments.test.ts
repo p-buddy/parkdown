@@ -74,6 +74,22 @@ describe(removeAllParkdownComments.name, () => {
       Hello
     `);
   })
+
+  test("indented", () => {
+    const code = dedent`
+      // p↓:
+            // p↓:
+      Hello
+      // p↓:
+            // p↓:
+      Hello /* p↓: */ Hello /** p↓: **/ Hello
+      Hello`;
+    expect(removeAllParkdownComments(code)).toBe(dedent`
+      Hello
+      Hello Hello Hello
+      Hello
+    `);
+  })
 })
 
 describe(applyCommentQueriesFirstPass.name, () => {

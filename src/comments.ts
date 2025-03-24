@@ -34,12 +34,22 @@ export const removeAllParkdownComments = (content: string) =>
     .reduce((acc, { range: [start, end], value }) => {
       const remove = (left: number, right: number) =>
         acc.slice(0, left) + acc.slice(right);
+
       const prev = charTest(acc[start - 1]);
       const next = charTest(acc[end]);
       const last = end === acc.length;
-      if (prev.isNewline && next.isNewline) return remove(start - (last ? 1 : 0), end + 1);
-      else if (prev.isNewline) return remove(start, end + (next.isSpace ? 1 : 0))
-      else return remove(start - (prev.isSpace ? 1 : 0), end)
+
+      let lineStart = start;
+      while (lineStart > 0 && acc[lineStart - 1] !== '\n') lineStart--;
+      const lineOnlyHasComment = acc.slice(lineStart, start).trim() === '';
+
+      if (prev.isNewline && next.isNewline) {
+        return remove(start - (last ? 1 : 0), end + 1);
+      } else if (prev.isNewline || lineOnlyHasComment) {
+        return remove(lineStart, end + (next.isSpace || next.isNewline ? 1 : 0));
+      } else {
+        return remove(start - (prev.isSpace ? 1 : 0), end);
+      }
     }, content);
 
 export const queryMatchers = prefixes.map(prefix => new RegExp(`^${escapeForRegEx(prefix)}(\\?[^\\s]+)`));
