@@ -228,3 +228,6 @@ export const sanitize = (content: string, space: string = DEFAULT_SPACE) => {
     .replaceAll(space, " ");
 }
 /** p↓: sanitize */
+
+export const escapeForRegEx = (item: string) =>
+  item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -2,6 +2,7 @@ import { dedent } from "ts-dedent";
 import { Intervals, sanitize } from "./utils"
 import { createParser, numberedParameters, type MethodDefinition } from "./api/";
 import { extractComments, type ExtractedComment } from "./extract";
+import { applyCommentQueriesFirstPass, getMatchingComments, removeAllParkdownComments } from "./comments";
 
 /** p↓: definition */
 const definitions = [
@@ -39,24 +40,19 @@ const definitions = [
 
 const parse = createParser(definitions);
 
-const getMatchingComments = (content: string, specifier: string) => extractComments(content)
-  .filter(({ value }) => value.includes(specifier))
-  .sort((a, b) => a.range[0] - b.range[0]);
-
 export const extractContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
   if (specifiers.length === 0) return content;
 
-  const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
-
+  content = applyCommentQueriesFirstPass(content, specifiers);
   const comments = extractComments(content);
+
+  const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
 
   const extraction = new Intervals();
   const markers = new Intervals();
 
   for (const specifier of specifiers) {
-    const matching = comments
-      .filter(({ value }) => value.includes(specifier))
-      .sort((a, b) => a.range[0] - b.range[0]);
+    const matching = getMatchingComments(content, specifier, comments);
 
     for (let i = 0; i < matching.length - 1; i += 2) {
       const open = matching[i];
@@ -80,15 +76,15 @@ export const extractContentWithinRegionSpecifiers = (content: string, ...specifi
 export const removeContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
   if (specifiers.length === 0) return content;
 
-  const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
+  content = applyCommentQueriesFirstPass(content, specifiers);
   const comments = extractComments(content);
+
+  const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
 
   const markers = new Intervals();
 
   for (const specifier of specifiers) {
-    const matching = comments
-      .filter(({ value }) => value.includes(specifier))
-      .sort((a, b) => a.range[0] - b.range[0]);
+    const matching = getMatchingComments(content, specifier, comments);
 
     for (let i = 0; i < matching.length - 1; i += 2) {
       const open = matching[i];
@@ -111,6 +107,8 @@ export const removeContentWithinRegionSpecifiers = (content: string, ...specifie
 
 export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string) => {
   if (!specifier) return content;
+
+  content = applyCommentQueriesFirstPass(content, specifier);
 
   const matching = getMatchingComments(content, specifier);
 
@@ -138,26 +136,6 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
     fullContent.collapse().map(([start, end]) => result.slice(start, end)).filter(Boolean).join("")
   ).trim();;
 };
-
-const charTest = (char?: string) => ({ isSpace: char === " ", isNewline: char === "\n" || char === undefined })
-
-export const removeAllParkdownComments = (content: string) =>
-  [
-    ...getMatchingComments(content, "p↓:"),
-    ...getMatchingComments(content, "parkdown:"),
-  ]
-    .sort((a, b) => a.range[0] - b.range[0])
-    .reverse()
-    .reduce((acc, { range: [start, end], value }) => {
-      const remove = (left: number, right: number) =>
-        acc.slice(0, left) + acc.slice(right);
-      const prev = charTest(acc[start - 1]);
-      const next = charTest(acc[end]);
-      const last = end === acc.length;
-      if (prev.isNewline && next.isNewline) return remove(start - (last ? 1 : 0), end + 1);
-      else if (prev.isNewline) return remove(start, end + (next.isSpace ? 1 : 0))
-      else return remove(start - (prev.isSpace ? 1 : 0), end)
-    }, content);
 
 export const applyRegion = (content: string, query?: string, isLast?: boolean) => {
   if (!query) return removeAllParkdownComments(content);
