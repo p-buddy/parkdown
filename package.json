@@ -2,7 +2,7 @@
 	"name": "@p-buddy/parkdown",
 	"type": "module",
 	"private": false,
-	"version": "0.0.22",
+	"version": "0.0.23",
 	"main": "src/index.ts",
 	"bin": "src/cli.ts",
 	"files": [
