@@ -690,13 +690,3 @@ depopulateMarkdownInclusions(file, writeFile);
 
 <!-- p↓ END -->
 <!-- p↓ END -->
-
-[](?register=recipe(pkg-replace)&region=replace(pkg,'''sweater-vest''',_))
-
-[](?register=reciple(pk-replace2)&remap(,'''$lib/index.js''','''sweater-vest'''))
-
-[](./src?apply=recipe(pkg-replace))
-
-[](?register=recipe(single-line-snippet)&region=single-line(snippet-head),trim(pocket-arg),splice-end(pocket,-2))
-
-[](./src?apply=recipe(single-line-snippet))
