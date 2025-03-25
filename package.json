@@ -32,7 +32,7 @@
 		"cli": "npx tsx src/cli.ts",
 		"increment": "npm version patch",
 		"publish:commit": "git add -u && git commit -m 'chore: regenerate docs and update version'",
-		"prepare": "pnpm cli && pnpm increment && pnpm publish:commit && pnpm build && pnpm publish"
+		"prepare": "pnpm cli && pnpm increment && pnpm build && pnpm publish:commit && pnpm publish"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",
