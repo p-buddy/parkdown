@@ -4,6 +4,7 @@ import { type AstRoot, type Link, type PositionNode, type HasPosition, COMMA_NOT
 import { dirname, join, basename } from "node:path";
 import { wrap } from "./wrap";
 import { applyRegion } from "./region";
+import { Parameters } from "./parameterized";
 
 const specialLinkTargets = ["http", "./", "../", "?"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
@@ -193,7 +194,7 @@ export const recursivelyPopulateInclusions = (
     markdown = applyHeadingDepth(markdown, headingDepth);
     const ast = parse.md(markdown);
 
-    const recipes = new Map<string, URLSearchParams>();
+    const container = new Parameters();
 
     return getReplacementTargets(markdown, ast)
       .sort(nodeSort)
@@ -201,9 +202,14 @@ export const recursivelyPopulateInclusions = (
       .map(target => {
         const { url, headingDepth } = target;
         const [base, ...splitOnQuery] = basename(url).split("?");
-        const query = splitOnQuery.join("?");
+        const query = container.apply(splitOnQuery.join("?"));
 
-        if (url.startsWith("./") || url.startsWith("../")) {
+        if (url.startsWith("?")) {
+          const params = new URLSearchParams(query);
+          const registrations = params.get("register")?.split(COMMA_NOT_IN_PARENTHESIS);
+          registrations?.forEach(query => container.tryRegister(query));
+        }
+        else if (url.startsWith("./") || url.startsWith("../")) {
           const extension = base.split(".").pop() ?? "";
           const dir = dirname(url);
           const path = join(dir, base);
@@ -212,10 +218,14 @@ export const recursivelyPopulateInclusions = (
 
           /** p↓: query */
           const params = new URLSearchParams(query);
+          const entries = (key: string) => {
+            const values = Array.from(params.entries()).filter(([k]) => k === key).map(([_, v]) => v);
+            return values.length >= 1 ? values.join(",") : undefined;
+          };
           /** p↓: query */
 
           /** p↓: query */
-          const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+          const regions = entries("region")?.split(COMMA_NOT_IN_PARENTHESIS);
           /** p↓: query */
 
           content = regions
@@ -264,11 +274,6 @@ export const recursivelyPopulateInclusions = (
         }
         else if (url.startsWith("http"))
           throw new Error("External web links are not implemented yet");
-        else if (url.startsWith("?")) {
-          const params = new URLSearchParams(url);
-          const registrations = params.get("register")?.split(COMMA_NOT_IN_PARENTHESIS);
-          console.log(registrations)
-        }
         else
           throw new Error(`Unsupported link type: ${url}`);
       })

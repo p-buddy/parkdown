@@ -330,7 +330,7 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
       const { inside, outside, id } = result;
       const start = { left: outside ?? true, right: inside ?? true };
       const end = { left: inside ?? true, right: outside ?? true };
-      content = trimAroundRegionBoundaries(content, id, { start: { left: outside ?? true, right: inside ?? true }, end: { left: inside ?? true, right: outside ?? true } });
+      content = trimAroundRegionBoundaries(content, id, { start, end });
       break;
     }
     case "single-line":
