@@ -18,7 +18,7 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-Though comment regions can be nested, it is **CRITICAL** that regions with the _same_ specifier are **NOT** nested.
+Though comment regions can be nested, it is **CRITICAL** that regions that are retrieved with the _same_ specifier are **NOT** nested.
 
 Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
 
