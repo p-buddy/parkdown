@@ -29,7 +29,10 @@
 		"build": "pnpm run build:lib && pnpm run build:cli",
 		"test": "vitest",
 		"test:run": "vitest run",
-		"cli": "npx tsx src/cli.ts"
+		"cli": "npx tsx src/cli.ts",
+		"patch": "npm version patch",
+		"publish:commit": "git add -u && git commit -m 'chore: regenerate docs and update version'",
+		"prepare": "pnpm cli && pnpm patch && pnpm publish:commit && pnpm build && pnpm publish"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",
