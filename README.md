@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 663 chars: 22766 -->
+<!-- p↓ length lines: 663 chars: 22785 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,7 +256,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 450 chars: 18060 -->
+<!-- p↓ length lines: 450 chars: 18079 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -294,7 +294,7 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-Though comment regions can be nested, it is **CRITICAL** that regions with the _same_ specifier are **NOT** nested.
+Though comment regions can be nested, it is **CRITICAL** that regions that are retrieved with the _same_ specifier are **NOT** nested.
 
 Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
 
