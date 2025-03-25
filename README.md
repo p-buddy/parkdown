@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 601 chars: 19975 -->
+<!-- p↓ length lines: 663 chars: 22766 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,7 +256,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 388 chars: 15269 -->
+<!-- p↓ length lines: 450 chars: 18060 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -265,15 +265,19 @@ You can pass query parameters to your inclusion links to control how their conte
 
 [](src/include.ts?&region=extract(query))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 10 chars: 322 -->
+<!-- p↓ length lines: 14 chars: 560 -->
 
 ```ts
 const params = new URLSearchParams(query);
-const regions = params.get("region")?.split(COMMA_NOT_IN_PARENTHESIS);
-const skip = params.has("skip");
-const headingModfiier = params.get("heading") ?? 0;
-const inlineOverride = params.has("inline");
-const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
+const entries = (key: string) => {
+  const values = Array.from(params.entries()).filter(([k]) => k === key).map(([_, v]) => v);
+  return values.length >= 1 ? values.join(",") : undefined;
+};
+          const regions = entries("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+          const skip = params.has("skip");
+          const headingModfiier = params.get("heading") ?? 0;
+          const inlineOverride = params.has("inline");
+          const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
 ```
 
 <!-- p↓ END -->
@@ -290,13 +294,13 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-Identifiers will be searched for within the text of a comment split by spaces (i.e. `some-specifier` is a single identifier, but `some specifier` represents two separate identifiers).
+Though comment regions can be nested, it is **CRITICAL** that regions with the _same_ specifier are **NOT** nested.
+
+Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
 
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
-- `[](<url>?region=extract(some-specifier))`
-- `[](<url>?region=remove(some-specifier))`
-- `[](<url>?region=replace(some-specifier,replacement-content))`
+- `[](<url>?region=method(argument))`
 
 If no value(s) are included (e.g. `[](<url>?region)`), then simply all comments that contain `parkdown:` or `p↓:` will be stripped (as is done as a post-processing step for all other `region` functionality).
 
@@ -316,10 +320,11 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 [](src/region.ts?region=extract(definition))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 64 chars: 3718 -->
+<!-- p↓ length lines: 122 chars: 6241 -->
 
 ```ts
 const definitions = [
+
   /**
    * Extract regions from the retrieved content between comments that INCLUDE the specified ids.
    * @param id The id of the comment to extract.
@@ -330,6 +335,7 @@ const definitions = [
    * @example [](<url>?region=extract(specifier,other-specifier,some-other-specifier))
    */
   "extract(id: string, 0?: string, 1?: string, 2?: string)",
+
   /**
    * Remove regions from the retrieved content between comments that INCLUDE the specified ids.
    * @param id The id of the comment to remove.
@@ -340,6 +346,7 @@ const definitions = [
    * @example [](<url>?region=remove(specifier,other-specifier,some-other-specifier))
    */
   "remove(id: string, 0?: string, 1?: string, 2?: string)",
+
   /**
    * Replace regions from the retrieved content between comments that INCLUDE the specified ids.
    * @param id The id of the comment to replace.
@@ -350,26 +357,9 @@ const definitions = [
    * @example [](<url>?region=replace(specifier,new_content,_)
    */
   "replace(id: string, with?: string, space?: string)",
+
   /**
-   * Splice the retrieved content at the boundary of a comment region (which must INCLUDE the specified id).
-   * 
-   * **NOTE:** Unlike `extract`, `remove`, and `replace`, `splice` does remove the comment from the content after processing.
-   * @param id The id of the comment regions to act on.
-   * @param deleteCount The number of characters to delete at either the beginning or end of the comment region.
-   * Specifying a number greater than or equal to 0 indicates the action should be taken at the end of the comment region.
-   * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment region.
-   * @param insert The content to insert.
-   * @param space The space character to use between words in the content to insert (defaults to `-`).
-   * @example [](<url>?region=splice(specifier,-1)) // Delete one character at the beginning of the comment region.
-   * @example [](<url>?region=splice(specifier,undefined,new-content)) // Insert at the beginning of the comment region.
-   * @example [](<url>?region=splice(specifier,0,new-content)) // Insert at the end of the comment region.
-   * @example [](<url>?region=splice(specifier,1,new-content)) // Delete one character at the end of the comment region and insert.
-   */
-  "splice(id: string, deleteCount?: number, insert?: string, space?: string)",
-  /**
-   * Remap the content within a comment region (which must INCLUDE the specified id).
-   * 
-   * **NOTE:** Unlike `extract`, `remove`, and `replace`, `remap` does not remove the comment from the content after processing.
+   * Remap the content (similiar to `string.replaceAll`) within a specified comment region.
    * @param id The id of the comment regions to act on.
    * @param from The content to replace.
    * @param to The content to replace with.
@@ -378,6 +368,78 @@ const definitions = [
    * @example [](<url>?region=remap(specifier,hello_world,hello_universe,_)
    */
   "remap(id: string, from: string, to?: string, space?: string)",
+
+  /**
+   * Make the content of the region a single line (where all whitespace characters, including newlines, are converted to a single space).
+   * @param id The id of the comment regions to act on.
+   * @example [](<url>?region=single-line(specifier))
+   */
+  "single-line(id: string, includeBoundaries?: boolean)",
+
+  /**
+   * Trim the whitespace surrounding the comment boundaries of the region.
+   * @param id The id of the comment region to act on.
+   * @param inside Whether to trim the whitespace within the comment region. Defaults to `true`.
+   * @param outside Whether to trim the whitespace outside the comment region. Defaults to `true`.
+   * @example [](<url>?region=trim(specifier))
+   * @example [](<url>?region=trim(specifier,false))
+   * @example [](<url>?region=trim(specifier,,false))
+   * @example [](<url>?region=trim(specifier,false,false))
+   */
+  "trim(id: string, inside?: boolean, outside?: boolean)",
+
+  /**
+   * Trim the whitespace surrounding the starting comment boundary of the specified region.
+   * @param id The id of the comment region to act on.
+   * @param left Whether to trim the whitespace to the left of the comment region. Defaults to `true`.
+   * @param right Whether to trim the whitespace to the right of the comment region. Defaults to `true`.
+   * @example [](<url>?region=trim-start(specifier))
+   * @example [](<url>?region=trim-start(specifier,false))
+   */
+  "trim-start(id: string, left?: boolean, right?: boolean)",
+
+  /**
+   * Trim the whitespace surrounding the ending comment boundary of the specified region.
+   * @param id The id of the comment region to act on.
+   * @param left Whether to trim the whitespace to the left of the comment region. Defaults to `true`.
+   * @param right Whether to trim the whitespace to the right of the comment region. Defaults to `true`.
+   * @example [](<url>?region=trim-end(specifier))
+   * @example [](<url>?region=trim-end(specifier,false))
+   */
+  "trim-end(id: string, left?: boolean, right?: boolean)",
+
+  /**
+   * Splice the retrieved content at the starting comment boundary of the specified region.
+   * @param id The id of the comment region to act on.
+   * @param deleteCount The number of characters to delete at either the beginning or end of the comment boundary.
+   * Specifying a number greater than or equal to 0 indicates the action should be taken at the end of the comment boundary (i.e to the right of the comment).
+   * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
+   * @param insert The content to insert.
+   * @param space The space character to use between words in the content to insert (defaults to `-`).
+   * 
+   * **NOTE:** Content within comments will not be acted upon.
+   */
+  "splice-start(id: string, deleteCount?: number, insert?: string, space?: string)",
+
+  /**
+   * Splice the retrieved content at the ending comment boundary of the specified region.
+   * @param id The id of the comment region to act on.
+   * @param deleteCount The number of characters to delete at either the beginning or end of the comment boundary.
+   * Specifying a number greater than or equal to 0 indicates the action should be taken at the end of the comment boundary (i.e to the right of the comment).
+   * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
+   * @param insert The content to insert.
+   * @param space The space character to use between words in the content to insert (defaults to `-`).
+   * 
+   * **NOTE:** Content within comments will not be acted upon.
+   */
+  "splice-end(id: string, deleteCount?: number, insert?: string, space?: string)",
+
+  /**
+   * If included at the end of a query, parkdown comments will not be removed from the content after processing. 
+   * Helpful when trying to determine fine-grained edits (e.g. trimming, splicing, etc.).
+   */
+  "debug()"
+
 ]
 ```
 
