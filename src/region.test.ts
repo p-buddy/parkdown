@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { dedent } from "ts-dedent";
-import { extractContentWithinRegionSpecifiers, remapContentWithinRegionSpecifier, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier, spliceContentAroundRegionSpecifier } from "./region";
+import { extractContentWithinRegionSpecifiers, asSingleLine, remapContentWithinRegionSpecifier, removeContentWithinRegionSpecifiers, replaceContentWithinRegionSpecifier, spliceContentAtRegionBoundarySpecifier, trimAroundRegionBoundaries } from "./region";
+import { removeAllParkdownComments } from "./comments";
 
 describe(extractContentWithinRegionSpecifiers.name, () => {
   test("basic", () => {
@@ -144,34 +145,66 @@ describe(replaceContentWithinRegionSpecifier.name, () => {
   })
 });
 
-describe(spliceContentAroundRegionSpecifier.name, () => {
+describe(spliceContentAtRegionBoundarySpecifier.name, () => {
   test("basic", () => {
     const code = dedent`
       /* id */ hello /* id */
     `;
 
     expect(
-      spliceContentAroundRegionSpecifier(code, "id", undefined, "world")
+      spliceContentAtRegionBoundarySpecifier(code, "id", "start", undefined, "world")
     ).toEqual("world" + code);
     expect(
-      spliceContentAroundRegionSpecifier(code, "id", 0, "world")
+      spliceContentAtRegionBoundarySpecifier(code, "id", "end", 0, "world")
     ).toEqual(code + "world");
 
     // Check clamping
     expect(
-      spliceContentAroundRegionSpecifier(code, "id", -1, "world")
+      spliceContentAtRegionBoundarySpecifier(code, "id", "start", -1, "world")
     ).toEqual("world" + code);
     expect(
-      spliceContentAroundRegionSpecifier(code, "id", 1, "world")
+      spliceContentAtRegionBoundarySpecifier(code, "id", "end", 1, "world")
     ).toEqual(code + "world");
 
     expect(
-      spliceContentAroundRegionSpecifier("xxx" + code, "id", -3)
-    ).toEqual(code);
+      spliceContentAtRegionBoundarySpecifier("xxx" + code, "id", "start", -3, "world")
+    ).toEqual("world" + code);
 
     expect(
-      spliceContentAroundRegionSpecifier(code + "xxx", "id", 3)
-    ).toEqual(code);
+      spliceContentAtRegionBoundarySpecifier(code, "id", "start", 0, "xxx")
+    ).toEqual(code.replace(" hello", "xxx hello"));
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code + "xxx", "id", "end", 3, "world")
+    ).toEqual(code + "world");
+  })
+
+  test("inter-comment", () => {
+    const code = `xx/* id-1 */ hello /* id-2 */ world /* id-2 */ /* id-1 */xx`;
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-1", "end", -3)
+    ).toEqual(`xx/* id-1 */ hello /* id-2 */ worl/* id-2 *//* id-1 */xx`);
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-2", "end", 3)
+    ).toEqual(`xx/* id-1 */ hello /* id-2 */ world /* id-2 *//* id-1 */`);
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-2", "start", -8)
+    ).toEqual(`x/* id-1 *//* id-2 */ world /* id-2 */ /* id-1 */xx`);
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-2", "start", 8)
+    ).toEqual(`xx/* id-1 */ hello /* id-2 *//* id-2 *//* id-1 */xx`);
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-2", "start", 8, "...")
+    ).toEqual(`xx/* id-1 */ hello /* id-2 *//* id-2 */.../* id-1 */xx`);
+
+    expect(
+      spliceContentAtRegionBoundarySpecifier(code, "id-2", "start", 0, "...")
+    ).toEqual(`xx/* id-1 */ hello /* id-2 */... world /* id-2 */ /* id-1 */xx`);
   })
 });
 
@@ -196,4 +229,56 @@ describe(remapContentWithinRegionSpecifier.name, () => {
     ).toEqual("/* id */ hello /* id */");
   })
 
+});
+
+describe(asSingleLine.name, () => {
+  test("basic", () => {
+    const code = dedent`
+      /* id */
+      hello 
+      /* id */
+    `;
+
+    expect(asSingleLine(code, "id")).toEqual("/* id */ hello /* id */");
+  })
+  test("complex", () => {
+    const code = dedent`
+      <Tag>
+        <!-- pd: snippet-head begin -->
+        {#snippet vest(
+          /* pd: pocket begin */
+          pocket: /* pd: type begin */
+          {
+            /* pd: div-prop */
+            container: HTMLDivElement;
+            /* pd: div-prop */
+            /* pd: value-prop */
+            value: string;
+            /* pd: value-prop */
+          } /* pd: type end */,
+          /* pd: pocket end */
+        )}
+        <!-- pd: snippet-head end -->
+      </Tag>
+    `;
+
+    const result = asSingleLine(code, "snippet-head");
+    console.log(result);
+    console.log(removeAllParkdownComments(result));
+  })
+});
+
+describe(trimAroundRegionBoundaries.name, () => {
+  test("basic", () => {
+    const code = dedent`
+      x /* id */
+      hello
+      /* id */ x
+    `;
+
+    expect(trimAroundRegionBoundaries(code, "id", { start: { right: true } })).toEqual("x /* id */hello\n/* id */ x");
+    expect(trimAroundRegionBoundaries(code, "id", { end: { left: true } })).toEqual("x /* id */\nhello/* id */ x");
+    expect(trimAroundRegionBoundaries(code, "id", { end: { right: true } })).toEqual("x /* id */\nhello\n/* id */x");
+    expect(trimAroundRegionBoundaries(code, "id", { start: { left: true } })).toEqual("x/* id */\nhello\n/* id */ x");
+  })
 });

@@ -5,7 +5,7 @@ import { dirname, join, basename } from "node:path";
 import { wrap } from "./wrap";
 import { applyRegion } from "./region";
 
-const specialLinkTargets = ["http", "./", "../"] as const;
+const specialLinkTargets = ["http", "./", "../", "?"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
 
 export type SpecialLink = PositionNode<"link">;
@@ -193,18 +193,21 @@ export const recursivelyPopulateInclusions = (
     markdown = applyHeadingDepth(markdown, headingDepth);
     const ast = parse.md(markdown);
 
+    const recipes = new Map<string, URLSearchParams>();
+
     return getReplacementTargets(markdown, ast)
       .sort(nodeSort)
       .reverse()
       .map(target => {
         const { url, headingDepth } = target;
-        const [base, ...splitOnMark] = basename(url).split("?");
-        const extension = base.split(".").pop() ?? "";
-        const query = splitOnMark.join("?");
-        const dir = dirname(url);
-        const path = join(dir, base);
+        const [base, ...splitOnQuery] = basename(url).split("?");
+        const query = splitOnQuery.join("?");
 
         if (url.startsWith("./") || url.startsWith("../")) {
+          const extension = base.split(".").pop() ?? "";
+          const dir = dirname(url);
+          const path = join(dir, base);
+
           let content = getRelativePathContent(path);
 
           /** p↓: query */
@@ -261,9 +264,15 @@ export const recursivelyPopulateInclusions = (
         }
         else if (url.startsWith("http"))
           throw new Error("External web links are not implemented yet");
+        else if (url.startsWith("?")) {
+          const params = new URLSearchParams(url);
+          const registrations = params.get("register")?.split(COMMA_NOT_IN_PARENTHESIS);
+          console.log(registrations)
+        }
         else
           throw new Error(`Unsupported link type: ${url}`);
       })
+      .filter(Boolean)
       .reduce((acc, { target, content }) => replaceWithContent(acc, content, target), markdown);
   }
   catch (e) {

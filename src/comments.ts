@@ -1,6 +1,33 @@
 import { createParser, MethodDefinition } from "./api";
-import { extractComments, type ExtractedComment } from "./extract";
 import { COMMA_NOT_IN_PARENTHESIS, escapeForRegEx } from "./utils";
+
+export const extractComments = (input: string) => {
+  const commentRegex = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->)/gm;
+
+  const comments: ExtractedComment[] = [];
+  let match: RegExpExecArray;
+
+  while ((match = commentRegex.exec(input)) !== null) {
+    const range = [match.index, match.index + match[0].length] satisfies Range;
+    const value = commentValue(match[0]).trim();
+    comments.push({ range, value });
+  }
+
+  return comments;
+};
+
+export const commentValue = (fullMatch: string) => fullMatch.startsWith('//') ? fullMatch.slice(2) :
+  fullMatch.startsWith('/*') ? fullMatch.slice(2, -2) :
+    fullMatch.startsWith('<!--') ? fullMatch.slice(4, -3) :
+      fullMatch;
+
+/** 0-indexed */
+export type Range = [number, number];
+
+export type ExtractedComment = {
+  value: string;
+  range: Range;
+};
 
 const prefixes = [
   "p↓:",
@@ -41,15 +68,17 @@ export const removeAllParkdownComments = (content: string) =>
 
       let lineStart = start;
       while (lineStart > 0 && acc[lineStart - 1] !== '\n') lineStart--;
-      const lineOnlyHasComment = acc.slice(lineStart, start).trim() === '';
+      let lineEnd = end;
+      while (lineEnd < acc.length && acc[lineEnd] !== '\n') lineEnd++;
 
-      if (prev.isNewline && next.isNewline) {
+      const lineOnlyHasComment = acc.slice(lineStart, start).trim() === '' && acc.slice(end, lineEnd).trim() === '';
+
+      if (prev.isNewline && next.isNewline)
         return remove(start - (last ? 1 : 0), end + 1);
-      } else if (prev.isNewline || lineOnlyHasComment) {
+      else if (prev.isNewline || lineOnlyHasComment)
         return remove(lineStart, end + (next.isSpace || next.isNewline ? 1 : 0));
-      } else {
+      else
         return remove(start - (prev.isSpace ? 1 : 0), end);
-      }
     }, content);
 
 export const queryMatchers = prefixes.map(prefix => new RegExp(`^${escapeForRegEx(prefix)}(\\?[^\\s]+)`));
@@ -103,3 +132,4 @@ export const applyCommentQueriesFirstPass = (content: string, specifier_s: (stri
 
       return acc;
     }, content);
+

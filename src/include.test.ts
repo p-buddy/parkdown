@@ -380,3 +380,11 @@ describe(getReplacementTargets.name, () => {
     ).toBe("[](http://example.com)");
   });
 });
+
+describe("empty url", () => {
+  test('', () => {
+    const emptyMarkdown = "[](?register=recipe(hi))";
+    const emptyAst = parse.md(emptyMarkdown);
+    console.log(recursivelyPopulateInclusions(emptyMarkdown, 0, () => ""))
+  });
+});

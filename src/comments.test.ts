@@ -1,6 +1,31 @@
 import { describe, expect, test } from "vitest";
 import { dedent } from "ts-dedent";
-import { removeAllParkdownComments, queryMatchers, getSearchParams, applyCommentQueriesFirstPass } from "./comments";
+import { removeAllParkdownComments, queryMatchers, getSearchParams, applyCommentQueriesFirstPass, extractComments } from "./comments";
+
+describe(extractComments.name, () => {
+  test("basic", () => {
+    const code = dedent`
+    <script>
+      let count = 0;
+      /* A */
+      remove!
+      /* A */
+    </script>
+    <Component prop={/* p:?=1 B */ async () => {
+      /* B */
+    }}>
+      <!-- C -->
+      <p>Hello</p>
+      <!-- C -->
+    </Component>
+    `;
+
+    const comments = extractComments(code);
+    console.log(comments);
+    expect(comments.length).toBe(6);
+
+  })
+})
 
 describe(Object.keys({ queryMatchers })[0], () => {
   [

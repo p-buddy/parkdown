@@ -18,13 +18,13 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-Identifiers will be searched for within the text of a comment split by spaces (i.e. `some-specifier` is a single identifier, but `some specifier` represents two separate identifiers).
+Though comment regions can be nested, it is **CRITICAL** that regions with the _same_ specifier are **NOT** nested.
+
+Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
 
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
-- `[](<url>?region=extract(some-specifier))`
-- `[](<url>?region=remove(some-specifier))`
-- `[](<url>?region=replace(some-specifier,replacement-content))`
+- `[](<url>?region=method(argument))`
 
 If no value(s) are included (e.g. `[](<url>?region)`), then simply all comments that contain `parkdown:` or `p↓:` will be stripped (as is done as a post-processing step for all other `region` functionality).
 
