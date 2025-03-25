@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 574 chars: 17955 -->
+<!-- p↓ length lines: 601 chars: 19975 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,7 +256,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 361 chars: 13249 -->
+<!-- p↓ length lines: 388 chars: 15269 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -290,6 +290,8 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
+Identifiers will be searched for within the text of a comment split by spaces (i.e. `some-specifier` is a single identifier, but `some specifier` represents two separate identifiers).
+
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
 - `[](<url>?region=extract(some-specifier))`
@@ -314,7 +316,7 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 [](src/region.ts?region=extract(definition))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 36 chars: 1651 -->
+<!-- p↓ length lines: 64 chars: 3718 -->
 
 ```ts
 const definitions = [
@@ -348,6 +350,34 @@ const definitions = [
    * @example [](<url>?region=replace(specifier,new_content,_)
    */
   "replace(id: string, with?: string, space?: string)",
+  /**
+   * Splice the retrieved content at the boundary of a comment region (which must INCLUDE the specified id).
+   * 
+   * **NOTE:** Unlike `extract`, `remove`, and `replace`, `splice` does remove the comment from the content after processing.
+   * @param id The id of the comment regions to act on.
+   * @param deleteCount The number of characters to delete at either the beginning or end of the comment region.
+   * Specifying a number greater than or equal to 0 indicates the action should be taken at the end of the comment region.
+   * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment region.
+   * @param insert The content to insert.
+   * @param space The space character to use between words in the content to insert (defaults to `-`).
+   * @example [](<url>?region=splice(specifier,-1)) // Delete one character at the beginning of the comment region.
+   * @example [](<url>?region=splice(specifier,undefined,new-content)) // Insert at the beginning of the comment region.
+   * @example [](<url>?region=splice(specifier,0,new-content)) // Insert at the end of the comment region.
+   * @example [](<url>?region=splice(specifier,1,new-content)) // Delete one character at the end of the comment region and insert.
+   */
+  "splice(id: string, deleteCount?: number, insert?: string, space?: string)",
+  /**
+   * Remap the content within a comment region (which must INCLUDE the specified id).
+   * 
+   * **NOTE:** Unlike `extract`, `remove`, and `replace`, `remap` does not remove the comment from the content after processing.
+   * @param id The id of the comment regions to act on.
+   * @param from The content to replace.
+   * @param to The content to replace with.
+   * @param space The space character to use between words in the content to replace (defaults to `-`).
+   * @example [](<url>?region=remap(specifier,hello-world,hello-universe))
+   * @example [](<url>?region=remap(specifier,hello_world,hello_universe,_)
+   */
+  "remap(id: string, from: string, to?: string, space?: string)",
 ]
 ```
 
@@ -359,7 +389,7 @@ Skip the default processing behavior for the given type of file.
 
 [](src/include.ts?wrap=dropdown(See-default-processing-behavior.)&region=extract(Default-Behavior),replace(...))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 21 chars: 525 -->
+<!-- p↓ length lines: 17 chars: 273 -->
 
 <details>
 <summary>
@@ -368,15 +398,11 @@ See default processing behavior.
 
 ```ts
 if (extension === "md") {
- 
-  const getContent = extendGetRelativePathContent(getRelativePathContent, target);
-  const relative = basePath ? join(basePath, dir) : dir;
-  const depth = clampHeadingSum(headingDepth, Number(headingModfiier));
- 
-  content = recursivelyPopulateInclusions(content, depth, getContent, path, relative);
+  * ...
+  content = recursivelyPopulateInclusions(content, * ...);
 }
 else if (/^(js|ts)x?|svelte$/i.test(extension))
-  content = wrap(content, "code", { extension, inline });
+  content = wrap(content, "code", * ...);
 ```
 
 </details>
@@ -512,7 +538,7 @@ const definitions = [
 
 [](.assets/api.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 104 chars: 4973 -->
+<!-- p↓ length lines: 105 chars: 4993 -->
 #### Query Parameters with Function-like APIs
 
 Some query parameters have more complex APIs, which are defined by a collection of typescript function singatures (limited to only `string`, `boolean`, and `number` arguments), like:
@@ -543,7 +569,7 @@ Please note the following:
 
 [](src/utils.ts?region=extract(url))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 31 chars: 498 -->
+<!-- p↓ length lines: 32 chars: 518 -->
 
 ```ts
 const urlCharacters = {
@@ -571,6 +597,7 @@ const urlCharacters = {
     ["square"]: "[",
     ["unsquare"]: "]",
     ["tick"]: "`",
+    ["line"]: "\n",
   }
 }
 ```

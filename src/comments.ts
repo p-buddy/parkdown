@@ -18,7 +18,7 @@ export const sortComment = (a: ExtractedComment, b: ExtractedComment) => a.range
 
 export const getMatchingComments = (content: string, specifier: string, comments?: ExtractedComment[]) =>
   (comments ?? extractComments(content))
-    .filter(({ value }) => value.includes(specifier))
+    .filter(({ value }) => value.split(" ").includes(specifier))
     .sort(sortComment);
 
 const charTest = (char?: string) => ({

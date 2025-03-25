@@ -63,7 +63,7 @@ const definitions = [
    * @example [](<url>?region=remap(specifier,hello-world,hello-universe))
    * @example [](<url>?region=remap(specifier,hello_world,hello_universe,_)
    */
-  "remap(id: string, from: string, to: string, space?: string)",
+  "remap(id: string, from: string, to?: string, space?: string)",
 ] /** p↓: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
@@ -173,13 +173,13 @@ export const spliceContentAroundRegionSpecifier = (
       , content);
 }
 
-export const remapContentWithinRegionSpecifier = (content: string, specifier: string, from: string, to: string, space?: string) => {
+export const remapContentWithinRegionSpecifier = (content: string, specifier: string, from: string, to?: string, space?: string) => {
   if (!specifier) return content;
 
   let result = '';
   let lastEnd = 0;
 
-  const sanitized = [from, to].map(value => sanitize(value, space)) as [string, string];
+  const sanitized = [from, to ?? ""].map(value => sanitize(value, space)) as [string, string];
 
   console.log(sanitized);
 

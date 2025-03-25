@@ -18,6 +18,8 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
+Identifiers will be searched for within the text of a comment split by spaces (i.e. `some-specifier` is a single identifier, but `some specifier` represents two separate identifiers).
+
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
 - `[](<url>?region=extract(some-specifier))`
