@@ -31,7 +31,8 @@
 		"test:run": "vitest run",
 		"cli": "npx tsx src/cli.ts",
 		"increment": "npm version patch",
-		"commit:docs": "git diff-index --quiet HEAD -- || (git add -u && git commit -m \"Automated commit after regenerating docs.\")",
+		"no:changes": "git diff-index --quiet HEAD --",
+		"commit:docs": "git add -u && (pnpm no:changes || git commit -m \"Automated commit after regenerating docs.\")",
 		"prepare": "pnpm test:run && pnpm cli && pnpm commit:docs && pnpm build && pnpm increment && pnpm build:cli"
 	},
 	"devDependencies": {
