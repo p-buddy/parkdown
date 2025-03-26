@@ -4,7 +4,7 @@ import { type AstRoot, type Link, type PositionNode, type HasPosition, COMMA_NOT
 import { dirname, join, basename } from "node:path";
 import { wrap } from "./wrap";
 import { applyRegion } from "./region";
-import { Parameters } from "./parameterized";
+import { Register } from "./parameterized";
 
 const specialLinkTargets = ["http", "./", "../", "?"] as const;
 const isSpecialLinkTarget = ({ url }: Link) => specialLinkTargets.some(target => url.startsWith(target));
@@ -194,7 +194,7 @@ export const recursivelyPopulateInclusions = (
     markdown = applyHeadingDepth(markdown, headingDepth);
     const ast = parse.md(markdown);
 
-    const container = new Parameters();
+    const register = new Register();
 
     return getReplacementTargets(markdown, ast)
       .sort(nodeSort)
@@ -202,13 +202,9 @@ export const recursivelyPopulateInclusions = (
       .map(target => {
         const { url, headingDepth } = target;
         const [base, ...splitOnQuery] = basename(url).split("?");
-        const query = container.apply(splitOnQuery.join("?"));
+        const query = register.apply(splitOnQuery.join("?"));
 
-        if (url.startsWith("?")) {
-          const params = new URLSearchParams(query);
-          const registrations = params.get("register")?.split(COMMA_NOT_IN_PARENTHESIS);
-          registrations?.forEach(query => container.tryRegister(query));
-        }
+        if (url.startsWith("?")) register.tryStore(query);
         else if (url.startsWith("./") || url.startsWith("../")) {
           const extension = base.split(".").pop() ?? "";
           const dir = dirname(url);

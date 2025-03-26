@@ -13,11 +13,11 @@ const parsers = {
   apply: createParser(application)
 }
 
-export class Parameters {
+export class Register {
   recipes = new Map<string, string>();
 
-  tryRegister(fullQuery: string) {
-    const entries = Parameters.Entries(fullQuery);
+  tryStore(fullQuery: string) {
+    const entries = Register.Entries(fullQuery);
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i];
       if (key !== "register") continue;
@@ -37,7 +37,7 @@ export class Parameters {
   }
 
   apply(fullQuery: string) {
-    const entries = Parameters.Entries(fullQuery);
+    const entries = Register.Entries(fullQuery);
     const parts: string[] = [];
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i];

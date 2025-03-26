@@ -49,7 +49,7 @@ const definitions = [
    * @example [](<url>?region=remap(specifier,hello-world,hello-universe))
    * @example [](<url>?region=remap(specifier,hello_world,hello_universe,_)
    */
-  "remap(id: string, from: string, to?: string, space?: string)",
+  "remap(id?: string, from: string, to?: string, space?: string)",
 
   /**
    * Make the content of the region a single line (where all whitespace characters, including newlines, are converted to a single space).
@@ -234,16 +234,18 @@ export const spliceContentAtRegionBoundarySpecifier = (
 }
 
 export const remapContentWithinRegionSpecifier = (
-  content: string, specifier: string, from: string, to?: string, space?: string
+  content: string, specifier: string | undefined, from: string, to?: string, space?: string
 ) => {
-  if (!specifier) return content;
-
   let result = '';
   let lastEnd = 0;
 
   [from, to] = [from, to ?? ""].map(value => sanitize(value, space)) as [string, string];
 
-  for (const [open, close] of getMatchingCommentPairs(content, specifier)) {
+  const pairs = specifier
+    ? getMatchingCommentPairs(content, specifier)
+    : [[{ range: [0, 0] }, { range: [content.length, content.length] }]] as const;
+
+  for (const [open, close] of pairs) {
     result += content.slice(lastEnd, open.range[1]);
     result += content.slice(open.range[1], close.range[0]).replaceAll(from, to);
     lastEnd = close.range[0];

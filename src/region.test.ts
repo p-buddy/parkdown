@@ -227,6 +227,18 @@ describe(remapContentWithinRegionSpecifier.name, () => {
     expect(
       remapContentWithinRegionSpecifier(code, "id", "-line-", "-")
     ).toEqual("/* id */ hello /* id */");
+  });
+
+  test("no specifier", () => {
+    const code = dedent`
+      /* id */
+      hello
+      /* id */
+    `;
+
+    expect(
+      remapContentWithinRegionSpecifier(code, undefined, "hello", "world")
+    ).toEqual(code.replace("hello", "world"));
   })
 
 });
