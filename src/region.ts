@@ -139,43 +139,37 @@ const getMatchingCommentIntervals = (content: string, specifier: string, comment
 
 const finalize = (content: string) => dedent(content).trim();
 
+const isNonNewlineWhitespace = (content: string, index: number) =>
+  content[index] !== undefined && /[^\S\r\n]/.test(content[index]);
+
+const clamp = (content: string, index: number) => Math.max(0, Math.min(content.length, index));
+
 export const extractContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
   if (specifiers.length === 0) return content;
-
   const comments = extractComments(content);
-
-  const extraction = new Intervals();
-  // Should only non-prefixed comments be removed?
-  const markers = new Intervals();
-
-  for (const specifier of specifiers)
-    for (const [open, close] of getMatchingCommentPairs(content, specifier, comments)) {
-      extraction.push(open.range[1], close.range[0]);
-      const [start, ...rest] = content.slice(open.range[1], close.range[0]);
-      const last = rest[rest.length - 1];
-      markers.push(open.range[0], open.range[1] + (Boolean(start.trim()) ? 0 : 1));
-      markers.push(close.range[0], close.range[1] + (Boolean(last.trim()) ? 0 : 1));
-    }
-
-  return finalize(extraction.subtract(markers).slice(content));
-};
+  return finalize(
+    new Intervals(...specifiers.flatMap(specifier =>
+      getMatchingCommentPairs(content, specifier, comments)
+        .map(([{ range: [start] }, { range: [, end] }]) => {
+          while (isNonNewlineWhitespace(content, start)) start--;
+          while (isNonNewlineWhitespace(content, end)) end++;
+          return [clamp(content, start), clamp(content, end)] as const;
+        })
+    )).slice(content)
+  );
+}
 
 export const removeContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
   if (specifiers.length === 0) return content;
-
   const comments = extractComments(content);
-
-  const slice = ([start, end]: ExtractedComment["range"]) => content.slice(start, end);
-
-  const markers = new Intervals();
-
-  for (const specifier of specifiers)
-    for (const [open, close] of getMatchingCommentPairs(content, specifier, comments)) {
-      const end = slice([close.range[1], close.range[1] + 1]).at(-1);
-      markers.push(open.range[0], end === "\n" ? close.range[1] + 1 : close.range[1]);
-    }
-
-  return finalize(new Intervals([0, content.length]).subtract(markers).slice(content));
+  return finalize(
+    new Intervals([0, content.length]).subtract(
+      new Intervals(...specifiers.flatMap(specifier =>
+        getMatchingCommentPairs(content, specifier, comments)
+          .map(([{ range: [, start] }, { range: [end] }]) => [start, end] as const)
+      ))
+    ).slice(content)
+  )
 };
 
 export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string,) => {
@@ -341,6 +335,10 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
     case "remap":
       content = remapContentWithinRegionSpecifier(content, result.id, result.from, result.to, result.space);
       break;
+  }
+
+  if (result.name === "debug") {
+    console.log("debug!!!", result)
   }
 
   content = isLast && result.name !== "debug" ? removeAllParkdownComments(content) : content;

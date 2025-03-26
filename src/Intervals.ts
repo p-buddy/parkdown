@@ -6,7 +6,7 @@ export class Intervals {
     return this._intervals;
   }
 
-  constructor(...ranges: Array<[number, number]>) {
+  constructor(...ranges: Array<[number, number] | readonly [number, number]>) {
     for (const [start, end] of ranges) {
       this.push(start, end);
     }

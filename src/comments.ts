@@ -1,6 +1,3 @@
-import { createParser, MethodDefinition } from "./api";
-import { COMMA_NOT_IN_PARENTHESIS, escapeForRegEx } from "./utils";
-
 export const extractComments = (input: string) => {
   const commentRegex = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->)/gm;
 
@@ -29,17 +26,16 @@ export type ExtractedComment = {
   range: Range;
 };
 
+/** (pd) prefixes */
 const prefixes = [
-  "p↓:",
+  "(pd)",
+  "(p↓)",
+  "(parkdown)",
   "pd:",
-  "parkdown:"
+  "p↓:",
+  "parkdown:",
 ]
-
-const definitions = [
-  "splice(delete?: number, insert?: string)"
-] satisfies MethodDefinition[];
-
-const parse = createParser(definitions);
+/** (pd) prefixes */
 
 export const sortComment = (a: ExtractedComment, b: ExtractedComment) => a.range[0] - b.range[0];
 

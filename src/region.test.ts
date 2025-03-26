@@ -4,69 +4,68 @@ import { extractContentWithinRegionSpecifiers, asSingleLine, remapContentWithinR
 import { removeAllParkdownComments } from "./comments";
 
 describe(extractContentWithinRegionSpecifiers.name, () => {
+  const extractAndDropComments = (content: string, ...specifiers: string[]) =>
+    removeAllParkdownComments(extractContentWithinRegionSpecifiers(content, ...specifiers));
+
   test("basic", () => {
     const code = dedent`
-      /* id-1 */
+      /* (pd) id-1 */
       This content should be extracted
-      /* id-1 */
+      /* (pd) id-1 */
 
       This content should not be extracted
     `;
-    const result = extractContentWithinRegionSpecifiers(code, "id-1");
-    expect(result).toEqual("This content should be extracted");
+    expect(extractAndDropComments(code, "id-1")).toEqual("This content should be extracted");
   });
 
   test("nested 1", () => {
     const code = dedent`
-      /* id-1 */
+      /* (pd) id-1 */
       This content should be extracted
-      /* id-2 */ This content should also be extracted /* id-2 */
-      /* id-1 */
+      /* (pd) id-2 */ This content should also be extracted /* (pd) id-2 */
+      /* (pd) id-1 */
 
       This content should not be extracted
     `;
 
-    expect(extractContentWithinRegionSpecifiers(code, "id-1"))
+    expect(extractAndDropComments(code.replaceAll("(pd) id-2", "id-2"), "id-1"))
       .toEqual("This content should be extracted\n/* id-2 */ This content should also be extracted /* id-2 */");
 
-    expect(extractContentWithinRegionSpecifiers(code, "id-1", "id-2"))
+    expect(extractAndDropComments(code, "id-1", "id-2"))
       .toEqual("This content should be extracted\nThis content should also be extracted");
 
-    expect(extractContentWithinRegionSpecifiers(code, "id-2"))
+    expect(extractAndDropComments(code, "id-2"))
       .toEqual("This content should also be extracted");
   });
 
   test("nested 2", () => {
     const code = dedent`
-      /* id-1 */
+      /* (pd) id-1 */
       This content should be extracted
-      /* id-2 */
+      /* (pd) id-2 */
       This content should also be extracted
-      /* id-2 */
-      /* id-1 */
+      /* (pd) id-2 */
+      /* (pd) id-1 */
 
       This content should not be extracted
     `;
-    expect(extractContentWithinRegionSpecifiers(code, "id-1"))
-      .toEqual("This content should be extracted\n/* id-2 */\nThis content should also be extracted\n/* id-2 */");
 
-    // NOTE: Nested full-line comments create extra newlines
-    expect(extractContentWithinRegionSpecifiers(code, "id-1", "id-2"))
+    expect(extractAndDropComments(code, "id-1", "id-2"))
       .toEqual("This content should be extracted\nThis content should also be extracted");
 
-    expect(extractContentWithinRegionSpecifiers(code, "id-2"))
+    expect(extractAndDropComments(code, "id-2"))
       .toEqual("This content should also be extracted");
   });
 
   test("mixed line and in-line", () => {
     const code = dedent`
-      /* id */
+      /* (pd) id */
       const definitions = [
         "hello",
         "world",
-      ] /* id */ satisfies string[];`;
+      ] /* (pd) id */ satisfies string[];`;
 
-    expect(extractContentWithinRegionSpecifiers(code, "id"))
+    expect(extractAndDropComments(code, "id"))
       .toEqual(dedent`
         const definitions = [
           "hello",
@@ -77,48 +76,75 @@ describe(extractContentWithinRegionSpecifiers.name, () => {
 
   test("split", () => {
     const code = dedent`
-      /* id */
+      /* (pd) id */
       hello,
-      /* id */
+      /* (pd) id */
 
-      /* id */
+      /* (pd) id */
       world
-      /* id */
+      /* (pd) id */
 
 
-      /* id */
+      /* (pd) id */
       !
-      /* id */
+      /* (pd) id */
     `;
 
-    expect(extractContentWithinRegionSpecifiers(code, "id"))
+    expect(extractAndDropComments(code, "id"))
       .toEqual(dedent`
         hello,
         world
         !`
       );
   })
+
+  test("with identation", () => {
+    const code = dedent`
+      /* (pd) id */
+      hello,
+      /* (pd) id */
+
+        /* (pd) id */
+        world
+        /* (pd) id */
+
+
+      /* (pd) id */
+      !
+      /* (pd) id */
+    `;
+
+    expect(extractAndDropComments(code, "id"))
+      .toEqual(dedent`
+        hello,
+          world
+        !`
+      );
+  })
 });
 
 describe(removeContentWithinRegionSpecifiers.name, () => {
+  const removeAndDropComments = (content: string, ...specifiers: string[]) =>
+    removeAllParkdownComments(removeContentWithinRegionSpecifiers(content, ...specifiers));
+
   test("basic", () => {
     const codes = [
       dedent`
         hello
-        /* id-1 */
+        /* (pd) id-1 */
         This content should be removed
-        /* id-1 */
+        /* (pd) id-1 */
         world
       `,
       dedent`
         hello
-        /* id-1 */ This content should be removed /* id-1 */
+        /* (pd) id-1 */ This content should be removed /* (pd) id-1 */
         world
       `
     ];
     const expected = "hello\nworld";
     for (const code of codes) {
-      const result = removeContentWithinRegionSpecifiers(code, "id-1");
+      const result = removeAndDropComments(code, "id-1");
       expect(result).toEqual(expected);
     }
 

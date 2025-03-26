@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 663 chars: 22786 -->
+<!-- p↓ length lines: 665 chars: 22802 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,21 +256,23 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 450 chars: 18080 -->
+<!-- p↓ length lines: 452 chars: 18096 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
 
 #### Processing Order
 
-[](src/include.ts?&region=extract(query))
+[](src/include.ts?&region=extract(query),debug)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 14 chars: 560 -->
+<!-- p↓ length lines: 16 chars: 570 -->
 
 ```ts
 const params = new URLSearchParams(query);
 const entries = (key: string) => {
-  const values = Array.from(params.entries()).filter(([k]) => k === key).map(([_, v]) => v);
+  const values = Array.from(params.entries())
+    .filter(([k]) => k === key)
+    .map(([_, v]) => v);
   return values.length >= 1 ? values.join(",") : undefined;
 };
           const regions = entries("region")?.split(COMMA_NOT_IN_PARENTHESIS);

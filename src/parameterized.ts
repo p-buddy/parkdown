@@ -17,7 +17,7 @@ export class Register {
   recipes = new Map<string, string>();
 
   tryStore(fullQuery: string) {
-    const entries = Register.Entries(fullQuery);
+    const entries = Register.Entries(this.apply(fullQuery));
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i];
       if (key !== "register") continue;

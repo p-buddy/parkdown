@@ -219,7 +219,9 @@ export const recursivelyPopulateInclusions = (
           /** p↓: query */
           const params = new URLSearchParams(query);
           const entries = (key: string) => {
-            const values = Array.from(params.entries()).filter(([k]) => k === key).map(([_, v]) => v);
+            const values = Array.from(params.entries())
+              .filter(([k]) => k === key)
+              .map(([_, v]) => v);
             return values.length >= 1 ? values.join(",") : undefined;
           };
           /** p↓: query */

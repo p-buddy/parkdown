@@ -6,31 +6,7 @@ You can pass query parameters to your inclusion links to control how their conte
 
 [](../src/include.ts?&region=extract(query))
 
-## `region`
-
-Either extract, remove, or replace content from the included file based on the provided specifier(s).
-
-Specifiers will be searched for within the file's comments, and are expected to come in pairs / bookend the desired region, like so:
-
-```ts
-/** some-specifier */
-... code to find ...
-/** some-specifier */
-```
-
-Though comment regions can be nested, it is **CRITICAL** that regions that are retrieved with the _same_ specifier are **NOT** nested.
-
-Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
-
-Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
-
-- `[](<url>?region=method(argument))`
-
-If no value(s) are included (e.g. `[](<url>?region)`), then simply all comments that contain `parkdown:` or `p↓:` will be stripped (as is done as a post-processing step for all other `region` functionality).
-
-[](./api-note.md?wrap=quote)
-
-[](../src/region.ts?region=extract(definition))
+[](./region.md?heading=-1)
 
 ## `skip`
 
