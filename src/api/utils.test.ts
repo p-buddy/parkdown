@@ -13,6 +13,7 @@ describe(parseInvocation.name, () => {
     ["code(,some-meta,,,)", { name: "code", parameters: [undefined, "some-meta"] }],
     ["dropdown(hello-world,true)", { name: "dropdown", parameters: ["hello-world", "true"] }],
     ["code(,,anything)", { name: "code", parameters: [undefined, undefined, "anything"] }],
+    ["code-name(,,anything)", { name: "code-name", parameters: [undefined, undefined, "anything"] }],
   ] as const;
 
   for (const [input, expected] of testCases) {
@@ -26,6 +27,13 @@ describe(parseDefinition.name, () => {
   const testCases = [
     ["code(lang?: string, meta?: string)", {
       name: "code",
+      parameters: [
+        { name: "lang", optional: true, type: "string" },
+        { name: "meta", optional: true, type: "string" }
+      ]
+    }],
+    ["code-name(lang?: string, meta?: string)", {
+      name: "code-name",
       parameters: [
         { name: "lang", optional: true, type: "string" },
         { name: "meta", optional: true, type: "string" }
@@ -62,6 +70,7 @@ describe(parseDefinition.name, () => {
 describe(createParser.name, () => {
   const definitions = [
     "code(lang?: string, meta?: string)" satisfies MethodDefinition,
+    "code-name(lang?: string, meta?: string)" satisfies MethodDefinition,
     "quote",
     "dropdown(summary: string, open?: boolean)" satisfies MethodDefinition,
   ] as const;
@@ -75,6 +84,7 @@ describe(createParser.name, () => {
     ["code(ts,some-meta)", { name: "code", lang: "ts", meta: "some-meta" }],
     ["code(,some-meta)", { name: "code", meta: "some-meta" }],
     ["code(,some-meta,)", { name: "code", meta: "some-meta" }],
+    ["code-name(ts,some-meta)", { name: "code-name", lang: "ts", meta: "some-meta" }],
     ["code(,,anything)", { error: true }],
     ["quote", { name: "quote" }],
     ["quote()", { name: "quote" }],

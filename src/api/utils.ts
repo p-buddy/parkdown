@@ -78,12 +78,12 @@ type ParsedMethodDefinition = { name: string; parameters?: ParsedParameterDefini
 export const parseDefinition = <T extends string>(definition: T): ParsedMethodDefinition => {
   // Match a method definition pattern:
   // ^ - start of string
-  // (\w+) - capture group 1: one or more word characters (method name)
+  // ([\w-_]+) - capture group 1: one or more word characters or hyphens or underscores (method name)
   // (?:\(([^)]*)\))? - optional non-capturing group:
   //   \( - literal opening parenthesis
   //   ([^)]*) - capture group 2: zero or more characters that are not closing parenthesis (parameter list)
   //   \) - literal closing parenthesis
-  const METHOD_REGEX = /^(\w+)(?:\(([^)]*)\))?/;
+  const METHOD_REGEX = /^([\w-_]+)(?:\(([^)]*)\))?/;
 
   const methodMatch = definition.match(METHOD_REGEX);
   if (!methodMatch) return { name: definition };
@@ -92,13 +92,13 @@ export const parseDefinition = <T extends string>(definition: T): ParsedMethodDe
 
   if (!paramString) return { name: methodName };
 
-  // (\w+)    - Capture group 1: One or more word characters (parameter name)
+  // ([\w-_]+)    - Capture group 1: One or more word characters or hyphens or underscores (parameter name)
   // (\?)?    - Capture group 2: Optional question mark (indicates optional parameter)
   // :        - Literal colon character
   // \s*      - Zero or more whitespace characters
   // ([^,]+)  - Capture group 3: One or more characters that are not commas (parameter type)
   // /g       - Global flag: Find all matches in the string, not just the first one
-  const PARAM_REGEX = /(\w+)(\?)?:\s*([^,]+)/g;
+  const PARAM_REGEX = /([\w-_]+)(\?)?:\s*([^,]+)/g;
 
   const parameters: ParsedParameterDefinition[] = [];
 
