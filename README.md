@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 663 chars: 22785 -->
+<!-- p↓ length lines: 663 chars: 22786 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,7 +256,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 450 chars: 18079 -->
+<!-- p↓ length lines: 450 chars: 18080 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -320,7 +320,7 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 [](src/region.ts?region=extract(definition))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 122 chars: 6241 -->
+<!-- p↓ length lines: 122 chars: 6242 -->
 
 ```ts
 const definitions = [
@@ -367,7 +367,7 @@ const definitions = [
    * @example [](<url>?region=remap(specifier,hello-world,hello-universe))
    * @example [](<url>?region=remap(specifier,hello_world,hello_universe,_)
    */
-  "remap(id: string, from: string, to?: string, space?: string)",
+  "remap(id?: string, from: string, to?: string, space?: string)",
 
   /**
    * Make the content of the region a single line (where all whitespace characters, including newlines, are converted to a single space).
