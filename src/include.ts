@@ -195,17 +195,21 @@ export const recursivelyPopulateInclusions = (
     const ast = parse.md(markdown);
 
     const register = new Register();
+    const targets = getReplacementTargets(markdown, ast).sort(nodeSort);
 
-    return getReplacementTargets(markdown, ast)
-      .sort(nodeSort)
+    targets
+      .filter(({ url }) => url.startsWith("?"))
+      .forEach(({ url }) => register.tryStore(url));
+
+    return targets
       .reverse()
       .map(target => {
         const { url, headingDepth } = target;
         const [base, ...splitOnQuery] = basename(url).split("?");
         const query = register.apply(splitOnQuery.join("?"));
 
-        if (url.startsWith("?")) register.tryStore(query);
-        else if (url.startsWith("./") || url.startsWith("../")) {
+        if (url.startsWith("?")) return;
+        if (url.startsWith("./") || url.startsWith("../")) {
           const extension = base.split(".").pop() ?? "";
           const dir = dirname(url);
           const path = join(dir, base);

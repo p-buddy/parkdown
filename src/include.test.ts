@@ -383,8 +383,11 @@ describe(getReplacementTargets.name, () => {
 
 describe("empty url", () => {
   test('', () => {
-    const emptyMarkdown = "[](?register=recipe(hi))";
-    const emptyAst = parse.md(emptyMarkdown);
-    console.log(recursivelyPopulateInclusions(emptyMarkdown, 0, () => ""))
+    const markdown = dedent`
+    [](?register=recipe(hi)&region=remap(,hi,hello))
+    
+    [](./file.md?apply=recipe(hi))
+    `;
+    console.log(recursivelyPopulateInclusions(markdown, 0, () => "hi"))
   });
 });
