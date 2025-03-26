@@ -44,7 +44,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 665 chars: 22802 -->
+<!-- p↓ length lines: 690 chars: 23471 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -55,7 +55,7 @@ These links can be rendered either [inline](#inline) or [block](#block), dependi
 
 Inline inclusions occur when your _text-less_ link has 1 or more siblings (meaning it's **not** the only node in a [paragraph](https://www.markdownguide.org/basic-syntax/#paragraphs-1)).
 
-> **CAUTION:** [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) will not protect you from authoring inline inclusions that should actually be [block](#block) inclusions to be valid markdown.
+> **CAUTION:** [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) will not protect you from authoring inline inclusions that create invalid markdown (and thus should instead be [block](#block) inclusions).
 
 There are two equivalent ways to author inline inclusions, [single-line](#single-line) or [multi-line](#multi-line), and which you choose depends solely on how you want your raw markdown to look (it will **not** affect the rendered output).
 
@@ -256,16 +256,16 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 452 chars: 18096 -->
+<!-- p↓ length lines: 477 chars: 18752 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
 
 #### Processing Order
 
-[](src/include.ts?&region=extract(query),debug)
+[](src/include.ts?&region=extract(query))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 16 chars: 570 -->
+<!-- p↓ length lines: 16 chars: 520 -->
 
 ```ts
 const params = new URLSearchParams(query);
@@ -275,20 +275,23 @@ const entries = (key: string) => {
     .map(([_, v]) => v);
   return values.length >= 1 ? values.join(",") : undefined;
 };
-          const regions = entries("region")?.split(COMMA_NOT_IN_PARENTHESIS);
-          const skip = params.has("skip");
-          const headingModfiier = params.get("heading") ?? 0;
-          const inlineOverride = params.has("inline");
-          const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
+const regions = entries("region")?.split(COMMA_NOT_IN_PARENTHESIS);
+const skip = params.has("skip");
+const headingModfiier = params.get("heading") ?? 0;
+const inlineOverride = params.has("inline");
+const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
 ```
 
 <!-- p↓ END -->
 
+[](.assets/region.md?heading=-1)
+<!-- p↓ BEGIN -->
+<!-- p↓ length lines: 183 chars: 8530 -->
 #### `region`
 
-Either extract, remove, or replace content from the included file based on the provided specifier(s).
+Modify content from the included file based on regions designated by comments.
 
-Specifiers will be searched for within the file's comments, and are expected to come in pairs / bookend the desired region, like so:
+Comments that act as region boundaries will be identified by their specifiers, and are expected to come in pairs / bookend the desired region, like so:
 
 ```ts
 /** some-specifier */
@@ -296,9 +299,30 @@ Specifiers will be searched for within the file's comments, and are expected to 
 /** some-specifier */
 ```
 
-Though comment regions can be nested, it is **CRITICAL** that regions that are retrieved with the _same_ specifier are **NOT** nested.
+> **NOTE:** Because comments are expected to come in consecutive pairs, nesting regions that are retrieved with the _same_ specifier will *NOT* work as expected (since the nesting will not be respected).
 
 Identifiers will be searched for within the text of a comment, split by spaces (i.e. `/* some-specifier */` has a single identifier, but `/* some specifier */` can be identified by either `some` or `specifier`).
+
+It is generally **BEST PRACTICE** to include a _parkdown prefix_ in your comment text, as all parkdown-prefixed comments will be stripped as a post-processing step. Otherwise, non-prefixed comment boundaries will be left in the included content, regardless of how they are processed.  
+
+The supported prefixes are:
+
+[](src/comments.ts?region=extract(prefixes))
+<!-- p↓ BEGIN -->
+<!-- p↓ length lines: 12 chars: 101 -->
+
+```ts
+const prefixes = [
+  "(pd)",
+  "(p↓)",
+  "(parkdown)",
+  "pd:",
+  "p↓:",
+  "parkdown:",
+]
+```
+
+<!-- p↓ END -->
 
 Below is the currently supported API for the `region` query parameter, where each defined method signature can be _invoked_ as a value for the `region` parameter, for example:
 
@@ -445,6 +469,7 @@ const definitions = [
 ]
 ```
 
+<!-- p↓ END -->
 <!-- p↓ END -->
 
 #### `skip`
