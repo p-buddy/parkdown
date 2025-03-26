@@ -234,9 +234,9 @@ describe(recursivelyPopulateInclusions.name, () => {
       child: {
         "file.ts": dedent`
           if (true) {
-            /* boundary */
+            /* (pd) boundary */
             const x = 5;
-            /* boundary */
+            /* (pd) boundary */
           }
         `,
       }
@@ -385,7 +385,7 @@ describe("empty url", () => {
   test('', () => {
     const markdown = dedent`
     [](?register=recipe(hi)&region=remap(,hi,hello))
-    
+
     [](./file.md?apply=recipe(hi))
     `;
     console.log(recursivelyPopulateInclusions(markdown, 0, () => "hi"))
