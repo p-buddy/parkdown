@@ -319,4 +319,32 @@ describe(trimAroundRegionBoundaries.name, () => {
     expect(trimAroundRegionBoundaries(code, "id", { end: { right: true } })).toEqual("x /* id */\nhello\n/* id */x");
     expect(trimAroundRegionBoundaries(code, "id", { start: { left: true } })).toEqual("x/* id */\nhello\n/* id */ x");
   })
+
+  test("complex", () => {
+    const code = dedent`
+      <Tag>
+        {#snippet snip(
+          /* (pd) args */
+          arg: /* (pd) type */
+          {
+            prop: number;
+          } /* (pd) type */,
+          /* (pd) args */
+        )}
+      </Tag>
+    `;
+
+    expect(trimAroundRegionBoundaries(code, "args", { start: { left: true } })).toEqual(dedent`
+      <Tag>
+        {#snippet snip(/* (pd) args */
+          arg: /* (pd) type */
+          {
+            prop: number;
+          } /* (pd) type */,
+          /* (pd) args */
+        )}
+      </Tag>
+    `)
+
+  })
 });

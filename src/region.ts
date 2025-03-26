@@ -317,16 +317,21 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
     }
     case "trim-start":
     case "trim-end": {
-      const { left, right, id } = result;
+      result.left ??= true;
+      result.right ??= true;
       const boundary = result.name === "trim-start" ? "start" : "end";
-      content = trimAroundRegionBoundaries(content, id, { [boundary]: { left: left ?? true, right: right ?? true } });
+      const { length } = content;
+      content = trimAroundRegionBoundaries(content, result.id, { [boundary]: result });
+      console.log(`Trimmed ${length - content.length} characters from ${boundary} of "${result.id}" region`);
       break;
     }
     case "trim": {
       const { inside, outside, id } = result;
       const start = { left: outside ?? true, right: inside ?? true };
       const end = { left: inside ?? true, right: outside ?? true };
+      const { length } = content;
       content = trimAroundRegionBoundaries(content, id, { start, end });
+      console.log(`Trimmed ${length - content.length} characters around "${result.id}" region`);
       break;
     }
     case "single-line":
