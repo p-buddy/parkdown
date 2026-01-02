@@ -10,7 +10,7 @@ Collectively, [parkdown](https://www.npmjs.com/package/@p-buddy/parkdown) enable
 
 [](./.assets/invocation.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 29 chars: 796 -->
+<!-- p↓ length lines: 24 chars: 634 -->
 ## Invocation
 
 Invoke [parkdown's]() functionality with either the [cli](#cli-inclusions) or via the `processMarkdownIncludes` [export](#populateMarkdownIncludes-export):
@@ -28,15 +28,10 @@ npx @p-buddy/parkdown # defaults to processing inclusions in the 'README.md' fil
 
 [](.assets/code/inclusions.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 10 chars: 172 -->
+<!-- p↓ length lines: 5 chars: 12 -->
 
 ```ts
-import { populateMarkdownInclusions } from "@p-buddy/parkdown";
 
-const file = "README.md";
-const writeFile = true;
-
-populateMarkdownInclusions(file, writeFile);
 ```
 
 <!-- p↓ END -->
@@ -44,7 +39,7 @@ populateMarkdownInclusions(file, writeFile);
 
 [](./.assets/authoring.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 690 chars: 23471 -->
+<!-- p↓ length lines: 730 chars: 25417 -->
 ## Authoring
 
 You author inclusions in your markdown files using a link with no text i.e. `[](<url>)`, where `<url>` points to some local or remote text resource (e.g.`./other.md`, `https://example.com/remote.md`).
@@ -256,7 +251,7 @@ Before...
 
 [](.assets/query.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 477 chars: 18752 -->
+<!-- p↓ length lines: 517 chars: 20698 -->
 ### Query parameters
 
 You can pass query parameters to your inclusion links to control how their content is processed and included within your markdown.
@@ -286,7 +281,7 @@ const wraps = params.get("wrap")?.split(COMMA_NOT_IN_PARENTHESIS);
 
 [](.assets/region.md?heading=-1)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 183 chars: 8530 -->
+<!-- p↓ length lines: 218 chars: 10475 -->
 #### `region`
 
 Modify content from the included file based on regions designated by comments.
@@ -346,17 +341,53 @@ Please see the [full explanation](#query-parameters-with-function-like-apis) to 
 
 [](src/region.ts?region=extract(definition))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 122 chars: 6242 -->
+<!-- p↓ length lines: 157 chars: 8187 -->
 
 ```ts
 const definitions = [
+  /**
+   * Include all content between comments that INCLUDE the specified ids.
+   *
+   * This is similar to `extract`, but instead of removing all other content, it appends the specified regions.
+   *
+   * @param id The id of the comment to include.
+   * @param 0 An optional additional id to include.
+   * @param 1 An optional additional id to include.
+   * @param 2 An optional additional id to include.
+   * @param 3 An optional additional id to include.
+   * @param 4 An optional additional id to include.
+   * @param 5 An optional additional id to include.
+   * @param 6 An optional additional id to include.
+   * @param 7 An optional additional id to include.
+   * @param 8 An optional additional id to include.
+   * @param 9 An optional additional id to include.
+   * @param 10 An optional additional id to include.
+   * @example [](<url>?region=include(specifier))
+   * @example [](<url>?region=include(specifier,other-specifier,some-other-specifier))
+   */
+  "include(id: string, 0?: string, 1?: string, 2?: string, 3?: string, 4?: string, 5?: string, 6?: string, 7?: string, 8?: string, 9?: string, 10?: string)",
 
   /**
    * Extract regions from the retrieved content between comments that INCLUDE the specified ids.
+   *
+   * NOTE: This method is deprecated in favor of `include`, which has more intuitive behavior.
+   * `extract` effectively behaves destructively, removing all content outside of the specified regions,
+   * thus you can't chain multiple `extract` calls to build up content from different regions
+   * (like you can with `include`).
+   *
+   * @deprecated Use `include` instead (usage is more intuitive).
    * @param id The id of the comment to extract.
-   * @param 0 An optional additional id to extract.
-   * @param 1 An optional additional id to extract.
-   * @param 2 An optional additional id to extract.
+   * @param 0 An optional additional id to include.
+   * @param 1 An optional additional id to include.
+   * @param 2 An optional additional id to include.
+   * @param 3 An optional additional id to include.
+   * @param 4 An optional additional id to include.
+   * @param 5 An optional additional id to include.
+   * @param 6 An optional additional id to include.
+   * @param 7 An optional additional id to include.
+   * @param 8 An optional additional id to include.
+   * @param 9 An optional additional id to include.
+   * @param 10 An optional additional id to include.
    * @example [](<url>?region=extract(specifier))
    * @example [](<url>?region=extract(specifier,other-specifier,some-other-specifier))
    */
@@ -442,7 +473,7 @@ const definitions = [
    * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
    * @param insert The content to insert.
    * @param space The space character to use between words in the content to insert (defaults to `-`).
-   * 
+   *
    * **NOTE:** Content within comments will not be acted upon.
    */
   "splice-start(id: string, deleteCount?: number, insert?: string, space?: string)",
@@ -455,17 +486,16 @@ const definitions = [
    * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
    * @param insert The content to insert.
    * @param space The space character to use between words in the content to insert (defaults to `-`).
-   * 
+   *
    * **NOTE:** Content within comments will not be acted upon.
    */
   "splice-end(id: string, deleteCount?: number, insert?: string, space?: string)",
 
   /**
-   * If included at the end of a query, parkdown comments will not be removed from the content after processing. 
+   * If included at the end of a query, parkdown comments will not be removed from the content after processing.
    * Helpful when trying to determine fine-grained edits (e.g. trimming, splicing, etc.).
    */
-  "debug()"
-
+  "debug()",
 ]
 ```
 
@@ -478,7 +508,7 @@ Skip the default processing behavior for the given type of file.
 
 [](src/include.ts?wrap=dropdown(See-default-processing-behavior.)&region=extract(Default-Behavior),replace(...))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 17 chars: 273 -->
+<!-- p↓ length lines: 22 chars: 273 -->
 
 <details>
 <summary>
@@ -486,12 +516,17 @@ See default processing behavior.
 </summary>
 
 ```ts
-if (extension === "md") {
-  * ...
-  content = recursivelyPopulateInclusions(content, * ...);
-}
-else if (/^(js|ts)x?|svelte$/i.test(extension))
-  content = wrap(content, "code", * ...);
+* ...
+  content = recursivelyPopulateInclusions(
+    content,
+    * ...
+  );
+} else if (/^(js|ts)x?|svelte$/i.test(extension))
+  content = wrap(
+    content,
+    "code",
+    * ...
+  );
 ```
 
 </details>
@@ -739,7 +774,7 @@ export const sanitize = (content: string, space: string = DEFAULT_SPACE) => {
 
 [](./.assets/depopulated.md)
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 38 chars: 1473 -->
+<!-- p↓ length lines: 33 chars: 1307 -->
 ## Removing populated inclusions
 
 Sometimes you may want to remove populated inclusions from your markdown file, since they can make things more difficult to read during authoring. You can do this either using the [cli](#cli-removing-populated-inclusions) or via the `removePopulatedInclusions` [export](#depopulateMarkdownIncludes-export):
@@ -766,15 +801,10 @@ npx @p-buddy/parkdown -d # defaults to processing the 'README.md' file of the cu
 
 [](.assets/code/depopulate.ts?region=replace(pkg,'''@p-buddy_slash_parkdown''',_))
 <!-- p↓ BEGIN -->
-<!-- p↓ length lines: 10 chars: 176 -->
+<!-- p↓ length lines: 5 chars: 12 -->
 
 ```ts
-import { depopulateMarkdownInclusions } from "@p-buddy/parkdown";
 
-const file = "README.md";
-const writeFile = true;
-
-depopulateMarkdownInclusions(file, writeFile);
 ```
 
 <!-- p↓ END -->
