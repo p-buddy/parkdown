@@ -27,12 +27,12 @@
 		"auto:commit:tracked": "git add -u && (git diff-index --quiet HEAD -- || git commit -m \"Automated commit.\")",
 		"build:lib": "vite build",
 		"build:cli": "vite build --config vite.cli.config.ts",
-		"build": "pnpm run build:lib && pnpm run build:cli",
+		"build": "npm run run build:lib && npm run run build:cli",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"cli": "npx tsx src/cli.ts",
-		"doc:commit": "pnpm cli && pnpm auto:commit:tracked",
-		"prepare": "pnpm test:run && pnpm doc:commit && pnpm build && npm version patch && git push && pnpm build:cli"
+		"doc:commit": "npm run cli && npm run auto:commit:tracked",
+		"prepare": "npm run test:run && npm run doc:commit && npm run build && npm version patch && git push && npm run build:cli"
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10",

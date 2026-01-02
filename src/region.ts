@@ -1,18 +1,64 @@
 import { dedent } from "ts-dedent";
-import { sanitize } from "./utils"
-import { Intervals } from './Intervals';
-import { createParser, numberedParameters, type MethodDefinition } from "./api/";
-import { extractComments, getMatchingComments, removeAllParkdownComments, sortComment, type ExtractedComment } from "./comments";
+import { sanitize } from "./utils";
+import { Intervals } from "./Intervals";
+import {
+  createParser,
+  numberedParameters,
+  type MethodDefinition,
+} from "./api/";
+import {
+  extractComments,
+  getMatchingComments,
+  removeAllParkdownComments,
+  sortComment,
+  type ExtractedComment,
+} from "./comments";
 
 /** p↓: definition */
 const definitions = [
+  /**
+   * Include all content between comments that INCLUDE the specified ids.
+   *
+   * This is similar to `extract`, but instead of removing all other content, it appends the specified regions.
+   *
+   * @param id The id of the comment to include.
+   * @param 0 An optional additional id to include.
+   * @param 1 An optional additional id to include.
+   * @param 2 An optional additional id to include.
+   * @param 3 An optional additional id to include.
+   * @param 4 An optional additional id to include.
+   * @param 5 An optional additional id to include.
+   * @param 6 An optional additional id to include.
+   * @param 7 An optional additional id to include.
+   * @param 8 An optional additional id to include.
+   * @param 9 An optional additional id to include.
+   * @param 10 An optional additional id to include.
+   * @example [](<url>?region=include(specifier))
+   * @example [](<url>?region=include(specifier,other-specifier,some-other-specifier))
+   */
+  "include(id: string, 0?: string, 1?: string, 2?: string, 3?: string, 4?: string, 5?: string, 6?: string, 7?: string, 8?: string, 9?: string, 10?: string)",
 
   /**
    * Extract regions from the retrieved content between comments that INCLUDE the specified ids.
+   *
+   * NOTE: This method is deprecated in favor of `include`, which has more intuitive behavior.
+   * `extract` effectively behaves destructively, removing all content outside of the specified regions,
+   * thus you can't chain multiple `extract` calls to build up content from different regions
+   * (like you can with `include`).
+   *
+   * @deprecated Use `include` instead (usage is more intuitive).
    * @param id The id of the comment to extract.
-   * @param 0 An optional additional id to extract.
-   * @param 1 An optional additional id to extract.
-   * @param 2 An optional additional id to extract.
+   * @param 0 An optional additional id to include.
+   * @param 1 An optional additional id to include.
+   * @param 2 An optional additional id to include.
+   * @param 3 An optional additional id to include.
+   * @param 4 An optional additional id to include.
+   * @param 5 An optional additional id to include.
+   * @param 6 An optional additional id to include.
+   * @param 7 An optional additional id to include.
+   * @param 8 An optional additional id to include.
+   * @param 9 An optional additional id to include.
+   * @param 10 An optional additional id to include.
    * @example [](<url>?region=extract(specifier))
    * @example [](<url>?region=extract(specifier,other-specifier,some-other-specifier))
    */
@@ -98,7 +144,7 @@ const definitions = [
    * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
    * @param insert The content to insert.
    * @param space The space character to use between words in the content to insert (defaults to `-`).
-   * 
+   *
    * **NOTE:** Content within comments will not be acted upon.
    */
   "splice-start(id: string, deleteCount?: number, insert?: string, space?: string)",
@@ -111,71 +157,116 @@ const definitions = [
    * Specifying undefined or a number less than 0 indicates the action should be taken at the beginning of the comment boundary (i.e to the left of the comment).
    * @param insert The content to insert.
    * @param space The space character to use between words in the content to insert (defaults to `-`).
-   * 
+   *
    * **NOTE:** Content within comments will not be acted upon.
    */
   "splice-end(id: string, deleteCount?: number, insert?: string, space?: string)",
 
   /**
-   * If included at the end of a query, parkdown comments will not be removed from the content after processing. 
+   * If included at the end of a query, parkdown comments will not be removed from the content after processing.
    * Helpful when trying to determine fine-grained edits (e.g. trimming, splicing, etc.).
    */
-  "debug()"
-
+  "debug()",
 ] /** p↓: definition */ satisfies MethodDefinition[];
 
 const parse = createParser(definitions);
 
-const getMatchingCommentPairs = (content: string, specifier: string, comments?: ExtractedComment[]) => {
+const getMatchingCommentPairs = (
+  content: string,
+  specifier: string,
+  comments?: ExtractedComment[]
+) => {
   const matching = getMatchingComments(content, specifier, comments);
   const pairs: [ExtractedComment, ExtractedComment][] = [];
   for (let i = 0; i < matching.length - 1; i += 2)
     pairs.push([matching[i], matching[i + 1]]);
   return pairs;
-}
+};
 
-const getMatchingCommentIntervals = (content: string, specifier: string, comments?: ExtractedComment[]) =>
-  new Intervals(...getMatchingComments(content, specifier, comments).map(({ range }) => range));
+const getMatchingCommentIntervals = (
+  content: string,
+  specifier: string,
+  comments?: ExtractedComment[]
+) =>
+  new Intervals(
+    ...getMatchingComments(content, specifier, comments).map(
+      ({ range }) => range
+    )
+  );
 
 const finalize = (content: string) => dedent(content).trim();
 
 const isNonNewlineWhitespace = (content: string, index: number) =>
   content[index] !== undefined && /[^\S\r\n]/.test(content[index]);
 
-const clamp = (content: string, index: number) => Math.max(0, Math.min(content.length, index));
+const clamp = (content: string, index: number) =>
+  Math.max(0, Math.min(content.length, index));
 
-export const extractContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
+export const extractContentWithinRegionSpecifiers = (
+  content: string,
+  ...specifiers: string[]
+) => {
   if (specifiers.length === 0) return content;
   const comments = extractComments(content);
   return finalize(
-    new Intervals(...specifiers.flatMap(specifier =>
-      getMatchingCommentPairs(content, specifier, comments)
-        .map(([{ range: [start] }, { range: [, end] }]) => {
-          while (isNonNewlineWhitespace(content, start)) start--;
-          while (isNonNewlineWhitespace(content, end)) end++;
-          return [clamp(content, start), clamp(content, end)] as const;
-        })
-    )).slice(content)
-  );
-}
-
-export const removeContentWithinRegionSpecifiers = (content: string, ...specifiers: string[]) => {
-  if (specifiers.length === 0) return content;
-  const comments = extractComments(content);
-  return finalize(
-    new Intervals([0, content.length]).subtract(
-      new Intervals(...specifiers.flatMap(specifier =>
-        getMatchingCommentPairs(content, specifier, comments)
-          .map(([{ range: [, start] }, { range: [end] }]) => [start, end] as const)
-      ))
+    new Intervals(
+      ...specifiers.flatMap((specifier) =>
+        getMatchingCommentPairs(content, specifier, comments).map(
+          ([
+            {
+              range: [start],
+            },
+            {
+              range: [, end],
+            },
+          ]) => {
+            while (isNonNewlineWhitespace(content, start)) start--;
+            while (isNonNewlineWhitespace(content, end)) end++;
+            return [clamp(content, start), clamp(content, end)] as const;
+          }
+        )
+      )
     ).slice(content)
-  )
+  );
 };
 
-export const replaceContentWithinRegionSpecifier = (content: string, specifier: string, replacement?: string, space?: string,) => {
+export const removeContentWithinRegionSpecifiers = (
+  content: string,
+  ...specifiers: string[]
+) => {
+  if (specifiers.length === 0) return content;
+  const comments = extractComments(content);
+  return finalize(
+    new Intervals([0, content.length])
+      .subtract(
+        new Intervals(
+          ...specifiers.flatMap((specifier) =>
+            getMatchingCommentPairs(content, specifier, comments).map(
+              ([
+                {
+                  range: [, start],
+                },
+                {
+                  range: [end],
+                },
+              ]) => [start, end] as const
+            )
+          )
+        )
+      )
+      .slice(content)
+  );
+};
+
+export const replaceContentWithinRegionSpecifier = (
+  content: string,
+  specifier: string,
+  replacement?: string,
+  space?: string
+) => {
   if (!specifier) return content;
 
-  let result = '';
+  let result = "";
   let lastEnd = 0;
 
   for (const [open, close] of getMatchingCommentPairs(content, specifier)) {
@@ -186,12 +277,19 @@ export const replaceContentWithinRegionSpecifier = (content: string, specifier: 
   result += content.slice(lastEnd);
 
   return finalize(
-    new Intervals([0, result.length]).subtract(getMatchingCommentIntervals(result, specifier)).slice(result)
+    new Intervals([0, result.length])
+      .subtract(getMatchingCommentIntervals(result, specifier))
+      .slice(result)
   );
 };
 
 export const spliceContentAtRegionBoundarySpecifier = (
-  content: string, specifier: string, boundary: "start" | "end", deleteCount?: number, insert?: string, space?: string
+  content: string,
+  specifier: string,
+  boundary: "start" | "end",
+  deleteCount?: number,
+  insert?: string,
+  space?: string
 ) => {
   if (!specifier) return content;
 
@@ -203,7 +301,7 @@ export const spliceContentAtRegionBoundarySpecifier = (
   const commentIntervals = new Intervals(...comments.map(({ range }) => range));
 
   return getMatchingCommentPairs(content, specifier, comments)
-    .map(pair => pair[boundary === "start" ? 0 : 1])
+    .map((pair) => pair[boundary === "start" ? 0 : 1])
     .sort(sortComment)
     .reverse()
     .reduce((acc, { range }) => {
@@ -225,19 +323,28 @@ export const spliceContentAtRegionBoundarySpecifier = (
         .subtract(spliced.offset(after ? 0 : insertion.length))
         .slice(acc);
     }, content);
-}
+};
 
 export const remapContentWithinRegionSpecifier = (
-  content: string, specifier: string | undefined, from: string, to?: string, space?: string
+  content: string,
+  specifier: string | undefined,
+  from: string,
+  to?: string,
+  space?: string
 ) => {
-  let result = '';
+  let result = "";
   let lastEnd = 0;
 
-  [from, to] = [from, to ?? ""].map(value => sanitize(value, space)) as [string, string];
+  [from, to] = [from, to ?? ""].map((value) => sanitize(value, space)) as [
+    string,
+    string
+  ];
 
   const pairs = specifier
     ? getMatchingCommentPairs(content, specifier)
-    : [[{ range: [0, 0] }, { range: [content.length, content.length] }]] as const;
+    : ([
+        [{ range: [0, 0] }, { range: [content.length, content.length] }],
+      ] as const);
 
   for (const [open, close] of pairs) {
     result += content.slice(lastEnd, open.range[1]);
@@ -246,25 +353,31 @@ export const remapContentWithinRegionSpecifier = (
   }
   result += content.slice(lastEnd);
   return result;
-}
+};
 
 export const asSingleLine = (content: string, specifier: string) => {
   if (!specifier) return content;
 
-  let result = '';
+  let result = "";
   let lastEnd = 0;
 
   for (const [open, close] of getMatchingCommentPairs(content, specifier)) {
     result += content.slice(lastEnd, open.range[1]);
-    result += content.slice(open.range[1], close.range[0]).replaceAll(/[\s\n]+/g, " ");
+    result += content
+      .slice(open.range[1], close.range[0])
+      .replaceAll(/[\s\n]+/g, " ");
     lastEnd = close.range[0];
   }
   result += content.slice(lastEnd);
   return result;
-}
+};
 
-type TrimConfig = { left?: boolean, right?: boolean };
-export const trimAroundRegionBoundaries = (content: string, specifier: string, config: Partial<Record<"start" | "end", TrimConfig>>) => {
+type TrimConfig = { left?: boolean; right?: boolean };
+export const trimAroundRegionBoundaries = (
+  content: string,
+  specifier: string,
+  config: Partial<Record<"start" | "end", TrimConfig>>
+) => {
   if (!specifier) return content;
 
   const isWhitespace = (index: number) => /\s/.test(content[index]);
@@ -291,28 +404,57 @@ export const trimAroundRegionBoundaries = (content: string, specifier: string, c
   }
 
   return new Intervals([0, content.length]).subtract(whitespace).slice(content);
-}
+};
 
-export const applyRegion = (content: string, query?: string, isLast?: boolean) => {
-  if (!query) return removeAllParkdownComments(content);
+export const applyRegion = (
+  current: string,
+  original: string,
+  query?: string,
+  isLast?: boolean
+) => {
+  if (!query) return removeAllParkdownComments(current);
 
   const result = parse(query);
 
   switch (result.name) {
+    case "include":
+      for (const id of [result.id, ...numberedParameters(result)])
+        current += extractContentWithinRegionSpecifiers(original, id);
+      break;
     case "extract":
-      content = extractContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      current = extractContentWithinRegionSpecifiers(
+        current ? current : original,
+        result.id,
+        ...numberedParameters(result)
+      );
       break;
     case "remove":
-      content = removeContentWithinRegionSpecifiers(content, result.id, ...numberedParameters(result));
+      current = removeContentWithinRegionSpecifiers(
+        current,
+        result.id,
+        ...numberedParameters(result)
+      );
       break;
     case "replace":
-      content = replaceContentWithinRegionSpecifier(content, result.id, result.with, result.space);
+      current = replaceContentWithinRegionSpecifier(
+        current,
+        result.id,
+        result.with,
+        result.space
+      );
       break;
     case "splice-start":
     case "splice-end": {
       const { deleteCount, insert, space, id } = result;
       const boundary = result.name === "splice-start" ? "start" : "end";
-      content = spliceContentAtRegionBoundarySpecifier(content, id, boundary, deleteCount, insert, space);
+      current = spliceContentAtRegionBoundarySpecifier(
+        current,
+        id,
+        boundary,
+        deleteCount,
+        insert,
+        space
+      );
       break;
     }
     case "trim-start":
@@ -320,32 +462,51 @@ export const applyRegion = (content: string, query?: string, isLast?: boolean) =
       result.left ??= true;
       result.right ??= true;
       const boundary = result.name === "trim-start" ? "start" : "end";
-      const { length } = content;
-      content = trimAroundRegionBoundaries(content, result.id, { [boundary]: result });
-      console.log(`Trimmed ${length - content.length} characters from ${boundary} of "${result.id}" region`);
+      const { length } = current;
+      current = trimAroundRegionBoundaries(current, result.id, {
+        [boundary]: result,
+      });
+      console.log(
+        `Trimmed ${length - current.length} characters from ${boundary} of "${
+          result.id
+        }" region`
+      );
       break;
     }
     case "trim": {
       const { inside, outside, id } = result;
       const start = { left: outside ?? true, right: inside ?? true };
       const end = { left: inside ?? true, right: outside ?? true };
-      const { length } = content;
-      content = trimAroundRegionBoundaries(content, id, { start, end });
-      console.log(`Trimmed ${length - content.length} characters around "${result.id}" region`);
+      const { length } = current;
+      current = trimAroundRegionBoundaries(current, id, { start, end });
+      console.log(
+        `Trimmed ${length - current.length} characters around "${
+          result.id
+        }" region`
+      );
       break;
     }
     case "single-line":
-      content = asSingleLine(content, result.id);
+      current = asSingleLine(current, result.id);
       break;
     case "remap":
-      content = remapContentWithinRegionSpecifier(content, result.id, result.from, result.to, result.space);
+      current = remapContentWithinRegionSpecifier(
+        current,
+        result.id,
+        result.from,
+        result.to,
+        result.space
+      );
       break;
   }
 
   if (result.name === "debug") {
-    console.log("debug!!!", result)
+    console.log("debug!!!", result);
   }
 
-  content = isLast && result.name !== "debug" ? removeAllParkdownComments(content) : content;
-  return isLast ? finalize(content) : content;
-}
+  current =
+    isLast && result.name !== "debug"
+      ? removeAllParkdownComments(current)
+      : current;
+  return isLast ? finalize(current) : current;
+};
