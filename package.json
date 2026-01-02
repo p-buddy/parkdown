@@ -27,7 +27,7 @@
 		"auto:commit:tracked": "git add -u && (git diff-index --quiet HEAD -- || git commit -m \"Automated commit.\")",
 		"build:lib": "vite build",
 		"build:cli": "vite build --config vite.cli.config.ts",
-		"build": "npm run run build:lib && npm run run build:cli",
+		"build": "npm run run build:lib && npm run build:cli",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"cli": "npx tsx src/cli.ts",
