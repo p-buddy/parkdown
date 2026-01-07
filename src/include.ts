@@ -77,7 +77,7 @@ export type SpecialComment<T extends CommentType = CommentType> =
 export const isSpecialComment =
   <T extends CommentType>(type: T) =>
   (node: Html): node is SpecialComment<T> =>
-    hasPosition(node) && node.value === specialComment[type];
+    hasPosition(node) && node.value.trim() === specialComment[type];
 
 export type ReplacementTarget = {
   url: string;
